@@ -4,12 +4,13 @@ import time
 import argparse
 import os
 import nltk
+from pyspark.sql import Row
 from pyspark.ml.feature import StopWordsRemover
 from pyspark.ml.feature import NGram
 from pyspark.ml.feature import Tokenizer, RegexTokenizer
 
 dateformat = '%Y-%m-%d'
-def ConvertToYearDate(x):
+def ConvertToDate(x):
     return time.strftime(dateformat, time.gmtime(int(x)))
 
 # read and parse reddit data
@@ -25,14 +26,17 @@ tokenizer = Tokenizer(inputCol="sentence", outputCol="words")
 wordsDataFrame = tokenizer.transform(sentenceDataFrame)
 for words_label in wordsDataFrame.select("words").take(3):
     print(words_label)
-regexTokenizer = RegexTokenizer(inputCol="sentence", outputCol="words", pattern="\\W")
 
 # remove words that occur frequently such as "a", "the"
 remover = StopWordsRemover(inputCol="words", outputCol="filtered")
-remover.transform(sentenceData).show(truncate=False)
+wordsDataFrame = remover.transform(wordsDataFrame)
 
 # generate all 3-grams
 ngram = NGram(n=3, inputCol="filtered", outputCol="ngrams")
-ngramDataFrame = ngram.transform(remover.transform(sentenceData))
+ngramDataFrame = ngram.transform(wordsDataFrame)
 for ngrams_label in ngramDataFrame.select("ngrams", "filtered").take(3):
     print(ngrams_label)
+    
+# convert timestamps to dates for each ngram
+ngramRDD = ngramDataFrame.map(lambda comment: Row(date=ConvertToDate(comment['date']), subreddit=comment['subreddit'], ngrams=comment['ngrams'])) \
+            .flatMap(lambda comment: [Row(date=comment['date'], subreddit=comment['subreddit'], ngram=ngram) for ngram in comment['ngrams']])
