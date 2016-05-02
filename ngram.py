@@ -31,12 +31,20 @@ for words_label in wordsDataFrame.select("words").take(3):
 remover = StopWordsRemover(inputCol="words", outputCol="filtered")
 wordsDataFrame = remover.transform(wordsDataFrame)
 
-# generate all 3-grams
-ngram = NGram(n=3, inputCol="filtered", outputCol="ngrams")
-ngramDataFrame = ngram.transform(wordsDataFrame)
-for ngrams_label in ngramDataFrame.select("ngrams", "filtered").take(3):
-    print(ngrams_label)
-    
-# convert timestamps to dates for each ngram
-ngramRDD = ngramDataFrame.map(lambda comment: Row(date=ConvertToDate(comment['date']), subreddit=comment['subreddit'], ngrams=comment['ngrams'])) \
-            .flatMap(lambda comment: [Row(date=comment['date'], subreddit=comment['subreddit'], ngram=ngram) for ngram in comment['ngrams']])
+for ngram_length in range(1,3):
+    # generate all ngrams
+    ngram = NGram(n=ngram_length, inputCol="filtered", outputCol="ngrams")
+    ngramDataFrame = ngram.transform(wordsDataFrame)
+    for ngrams_label in ngramDataFrame.select("ngrams", "filtered").take(3):
+        print(ngrams_label)
+        
+    # convert timestamps to dates for each ngram
+    ngramRDD = ngramDataFrame.map(lambda comment: Row(date=ConvertToDate(comment['date']), subreddit=comment['subreddit'], ngrams=comment['ngrams'])) \
+                .flatMap(lambda comment: [Row(date=comment['date'], subreddit=comment['subreddit'], ngram=ngram) for ngram in comment['ngrams']])
+
+    # count the occurrence of each ngram by date and subreddit
+    ngramCounts = ngramRDD.map(lambda x: ('{}::{}'.format(x['date'], x['subreddit']), 1)).reduceByKey(lambda x, y: x + y)
+    print ngramCounts.first()
+    # calculate ngram totals by day
+    ngramTotals = ngramRDD.map(lambda x: (x['date'], 1)).reduceByKey(lambda x, y: x + y)
+    print ngramTotals.first()
