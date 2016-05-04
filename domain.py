@@ -3,6 +3,7 @@ from pyspark import SparkContext, SparkConf, StorageLevel
 import boto
 import boto.s3
 from utils import findUrlDomain
+from storage import Mysql
 
 if __name__ == "__main__":
     conf = SparkConf().setAppName("reddit")
@@ -13,6 +14,7 @@ if __name__ == "__main__":
     folders = bucket.list("","/*/")
     folders = filter(lambda x: len(x) > 1 and len(x[1]) > 0, map(lambda x: x.name.split('/'), folders))
 
+    db = Mysql()
     THRESHOLD = 10
     # loop through the s3 key for each month
     for year, month in folders:
@@ -23,22 +25,11 @@ if __name__ == "__main__":
         # find the popularity of domains shared on reddit
         domainCounts = comments.flatMap(lambda x: findUrlDomain(x['body'])).map(lambda x: (x, 1)).reduceByKey(lambda x, y: x + y)
 
-        def saveDomains(month, rdd):
-            # connect to database from each worker
-            import sys, os, django
-            sys.path.append("/home/yuguang/PycharmProjects/reddit/project")
-            os.environ["DJANGO_SETTINGS_MODULE"] = "project.settings"
-            django.setup()
-            from reddit.models import Domain
-            for line in rdd:
-                d = Domain(month=month.replace('RC_', ''), count=line[1], name=line[0])
-                d.save()
-
-        domainCounts.filter(lambda x: x[1] > THRESHOLD).foreachPartition(lambda x: saveDomains(month, x))
+        domainCounts.filter(lambda x: x[1] > THRESHOLD).foreachPartition(lambda x: db.saveDomains(month, x))
 
         # filter out reddit.com comments and count comments in other subreddits
         subredditCounts = comments.filter(lambda x: x['subreddit'] != 'reddit.com') \
             .map(lambda x: (x['subreddit'], 1)) \
             .reduceByKey(lambda x, y: x + y)
-        #subredditCounts.filter(lambda x: x[1] > THRESHOLD).foreachPartition(lambda x: saveSubredditCounts(month, 'subreddits', x))
+        subredditCounts.filter(lambda x: x[1] > THRESHOLD).foreachPartition(lambda x: db.saveSubredditCounts(month, x))
         comments.unpersist()
