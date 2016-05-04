@@ -16,7 +16,7 @@ nodes = []
 
 keyspace = "reddit"
 
-def cleanSentence(s):    
+def cleanSentence(s):
     Url = '(hf=)?[\(\[]?(http?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)*\/?[\)\]]'
     ShortUrl = '[\(\[]?(http://(bit\.ly|t\.co|lnkd\.in|tcrn\.ch)\S*)\b[\)\]]'
     Number = '^[0-9]+([,.][0-9]+)?$'
@@ -30,7 +30,7 @@ def cleanSentence(s):
     TagsHtml = '&\w;'
     pattern = '|'.join([Url,ShortUrl,Number,Image,TagsLt,TagsGt,TagsAmps,TagsQuote,TagsTilde,TagsDash,TagsHtml])
     text = re.sub(re.compile(pattern), '*', s.lower())
-    return text.rstrip('.')
+    return filter(lambda x: not(x in '.,?![]:;\/\\()"{}-$%^&*'), text)
     
 def saveNgrams(ngramcount, rdditer, table, async=True):
     from cassandra.cluster import Cluster
