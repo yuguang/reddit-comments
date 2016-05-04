@@ -25,8 +25,11 @@ if __name__ == "__main__":
 
         def saveDomains(month, rdd):
             # connect to database from each worker
-            from models import Domain, db
-            db.connect()
+            import sys, os, django
+            sys.path.append("/home/yuguang/PycharmProjects/reddit/project")
+            os.environ["DJANGO_SETTINGS_MODULE"] = "project.settings"
+            django.setup()
+            from reddit.models import Domain
             for line in rdd:
                 d = Domain(month=month.replace('RC_', ''), count=line[1], name=line[0])
                 d.save()
