@@ -7,6 +7,11 @@ class Mysql():
         sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "project"))
         os.environ["DJANGO_SETTINGS_MODULE"] = "project.settings"
         django.setup()
+        from django.db import connection
+        cursor = connection.cursor()
+        cursor.execute('PRAGMA temp_store = MEMORY;')
+        cursor.execute('PRAGMA synchronous=OFF')
+        cursor.execute('PRAGMA default_cache_size = 10000')
 
     def saveSubredditCounts(self, month, rdd):
         self.connect()
