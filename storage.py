@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 
 class Mysql():
     def connect(self):
@@ -12,14 +13,20 @@ class Mysql():
         from reddit.models import Subreddit
         for line in rdd:
             d = Subreddit(month=month.replace('RC_', ''), count=line[1], name=line[0])
-            d.save()
+            try:
+                d.save()
+            except IntegrityError:
+                pass # month and domain name should be unique
 
     def saveDomains(self, month, rdd):
         self.connect()
         from reddit.models import Domain
         for line in rdd:
             d = Domain(month=month.replace('RC_', ''), count=line[1], name=line[0])
-            d.save()
+            try:
+                d.save()
+            except IntegrityError:
+                pass
 
 import unittest
 

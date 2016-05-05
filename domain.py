@@ -1,9 +1,11 @@
-import json
+import json, time
 from pyspark import SparkContext, SparkConf, StorageLevel
 import boto
 import boto.s3
 from utils import findUrlDomain
 from storage import Mysql
+
+S3_WAIT = 100
 
 if __name__ == "__main__":
     conf = SparkConf().setAppName("reddit")
@@ -18,7 +20,15 @@ if __name__ == "__main__":
     THRESHOLD = 10
     # loop through the s3 key for each month
     for year, month in folders:
-        data_rdd = sc.textFile("s3n://reddit-comments/{}/{}".format(year, month))
+        success = False
+        # try to reconnect if connection is reset
+        while not success:
+            try:
+                data_rdd = sc.textFile("s3n://reddit-comments/{}/{}".format(year, month))
+                success = True
+            except:
+                success = False
+                time.sleep(S3_WAIT)
         comments = data_rdd.filter(lambda x: len(x) > 0).map(lambda x: json.loads(x.encode('utf8')))
         comments.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
