@@ -1,10 +1,11 @@
+.idea/
+local_settings.py
 ### Python template
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *.sqlite3
-local_settings.py
 # C extensions
 *.so
 
