@@ -27,7 +27,7 @@ router.register(r'api/domains', views.DomainViewSet)
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
-    url(r'^domains/', views.domain_detail, name='domain-detail'),
+    url(r'^domains/', views.domain_detail, name='domain_detail'),
     url(r'^', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
