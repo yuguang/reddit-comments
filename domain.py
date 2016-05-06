@@ -6,6 +6,7 @@ from utils import findUrlDomain
 from storage import Mysql
 
 S3_WAIT = 100
+PARTITIONS = 500
 
 if __name__ == "__main__":
     conf = SparkConf().setAppName("reddit")
@@ -30,16 +31,17 @@ if __name__ == "__main__":
                 success = False
                 time.sleep(S3_WAIT)
         comments = data_rdd.filter(lambda x: len(x) > 0).map(lambda x: json.loads(x.encode('utf8')))
+        comments.repartition(PARTITIONS)
         comments.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
         # find the popularity of domains shared on reddit
-        domainCounts = comments.flatMap(lambda x: findUrlDomain(x['body'])).map(lambda x: (x, 1)).reduceByKey(lambda x, y: x + y)
+        domainCounts = comments.flatMap(lambda x: findUrlDomain(x['body'])).map(lambda x: (x, 1)).reduceByKey(lambda x, y: x + y, PARTITIONS)
 
         domainCounts.filter(lambda x: x[1] > THRESHOLD).foreachPartition(lambda x: db.saveDomains(month, x))
 
         # filter out reddit.com comments and count comments in other subreddits
         subredditCounts = comments.filter(lambda x: x['subreddit'] != 'reddit.com') \
             .map(lambda x: (x['subreddit'], 1)) \
-            .reduceByKey(lambda x, y: x + y)
+            .reduceByKey(lambda x, y: x + y, PARTITIONS)
         subredditCounts.filter(lambda x: x[1] > THRESHOLD).foreachPartition(lambda x: db.saveSubredditCounts(month, x))
         comments.unpersist()
