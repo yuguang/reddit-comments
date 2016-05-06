@@ -21,8 +21,6 @@ class SearchModelSerializer():
             term = request.GET.get('term', '')
             if term:
                 result = []
-                # get the last domain after comma
-                term = term.split(' ')[-1]
                 # TODO: add .distinct('name') after merging with main branch
                 for domain in self.model.objects.filter(name__icontains=term):
                     result.append({'id': domain.name,'label': domain.name,'value': domain.name})

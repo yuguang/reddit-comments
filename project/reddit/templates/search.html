@@ -27,8 +27,13 @@
       function extractLast( term ) {
         return split( term ).pop();
       }
-      $( "#search-box" ).autocomplete({
-        source: '',
+      var termSearch = _.debounce(function (request, response) {
+          $.getJSON('', {
+            term: extractLast(request.term)
+          }, response);
+        }, 300);
+      $("#search-box").autocomplete({
+        source: termSearch,
         minLength: 2,
         focus: function() {
           // prevent value inserted on focus
