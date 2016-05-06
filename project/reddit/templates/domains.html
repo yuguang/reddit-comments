@@ -6,7 +6,7 @@
       <div class="input-group">
         <input id="search-box" type="text" class="form-control" placeholder="Search for domain...">
       <span class="input-group-btn">
-        <button class="btn btn-default" type="button">Go!</button>
+        <button id="search-btn" class="btn btn-default" type="button">Go!</button>
       </span>
       </div><!-- /input-group -->
     </div><!-- /.col-lg-6 -->
@@ -19,20 +19,56 @@
 {% block script %}
   <script>
     $(function () {
+
+      function split( val ) {
+        return val.split( /,\s*/ );
+      }
+
+      function extractLast( term ) {
+        return split( term ).pop();
+      }
       $( "#search-box" ).autocomplete({
         source: "{% url 'domain_detail' %}",
         minLength: 2,
+        focus: function() {
+          // prevent value inserted on focus
+          return false;
+        },
+        delay: 500,
         select: function( event, ui ) {
-          displayDomain(ui.item.value);
+          var terms = split( this.value );
+          // remove the current input
+          terms.pop();
+          // add the selected item
+          terms.push( ui.item.value );
+          // add placeholder to get the comma-and-space at the end
+          terms.push( "" );
+          this.value = terms.join( ", " );
+          return false;
         }
       });
-      function displayDomain(domain) {
-        $.getJSON('', {'name': domain}, function (data) {
-          data = _.chain(data)
-            .uniq('month')
-            .map(function (point) {
-              var date = point.month.split('-');
-              return [Date.UTC(date[0], date[1]), point.count];
+      $('#search-btn').click( function () {
+        var terms = _.filter(split($('#search-box').val()), function(term) { return term.length });
+        // draw graph for domains
+        displayDomains(terms);
+      });
+      function displayDomains(domains) {
+        $.getJSON('', {'domains': domains.join(',')}, function (data) {
+          var series = _.chain(data)
+            .map(function (list, domain) {
+              list = _.chain(list)
+                .uniq('month')
+                .map(function (point) {
+                  var date = point.month.split('-');
+                  return [Date.UTC(date[0], date[1]), point.count];
+                })
+                .value();
+
+              return {
+                type: 'area',
+                name: domain,
+                data: list
+              }
             })
             .value();
 
@@ -85,11 +121,7 @@
               }
             },
 
-            series: [{
-              type: 'area',
-              name: domain,
-              data: data
-            }]
+            series: series
           });
         });
       }

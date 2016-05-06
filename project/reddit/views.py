@@ -15,12 +15,20 @@ def domain_detail(request):
         term = request.GET.get('term', '')
         if term:
             result = []
-            for domain in Domain.objects.filter(name__icontains=term).distinct('name'):
+            # get the last domain after comma
+            term = term.split(' ')[-1]
+            # TODO: add .distinct('name') after merging with main branch
+            for domain in Domain.objects.filter(name__icontains=term):
                 result.append({'id': domain.name,'label': domain.name,'value': domain.name})
             return JSONResponse(result)
         else:
-            timeline = get_list_or_404(Domain, name=request.GET['name'])
-            serializer = DomainSerializer(timeline, many=True)
-            return JSONResponse(serializer.data)
+            domains = request.GET['domains'].split(',')
+            response_dict = {}
+            for domain in domains:
+                timeline = Domain.objects.filter(name=domain)
+                if timeline:
+                    serializer = DomainSerializer(timeline, many=True)
+                    response_dict[domain] = serializer.data
+            return JSONResponse(response_dict)
     else:
         return render(request, 'domains.html')
