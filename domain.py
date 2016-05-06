@@ -10,6 +10,7 @@ PARTITIONS = 500
 
 if __name__ == "__main__":
     conf = SparkConf().setAppName("reddit")
+    conf.set('spark.serializer', 'org.apache.spark.serializer.KryoSerializer')
     sc = SparkContext(conf=conf, pyFiles=['utils.py'])
     conn = boto.s3.connect_to_region('us-west-2')
     bucket = conn.get_bucket('reddit-comments')

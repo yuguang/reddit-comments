@@ -28,6 +28,7 @@ router.register(r'api/domains', views.DomainViewSet)
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
     url(r'^domains/', views.domain_detail, name='domain_detail'),
+    url(r'^subreddits/', views.subreddit_detail, name='subreddit_detail'),
     url(r'^', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

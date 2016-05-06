@@ -1,0 +1,15 @@
+{% extends "search.html" %}
+
+{% block content %}
+  {% with 'subreddit' as name %}
+  {{block.super}}
+  {% endwith %}
+{% endblock content %}
+\
+{% block script %}
+  <script>
+  var title_text = 'Popularity of subreddits';
+  var y_text = 'Number of comments';
+  </script>
+  {{block.super}}
+{% endblock script %}

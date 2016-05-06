@@ -4,7 +4,7 @@
   <div class="row">
     <div class="col-lg-6">
       <div class="input-group">
-        <input id="search-box" type="text" class="form-control" placeholder="Search for domain...">
+        <input id="search-box" type="text" class="form-control" placeholder="Search for {{ name }}...">
       <span class="input-group-btn">
         <button id="search-btn" class="btn btn-default" type="button">Go!</button>
       </span>
@@ -28,7 +28,7 @@
         return split( term ).pop();
       }
       $( "#search-box" ).autocomplete({
-        source: "{% url 'domain_detail' %}",
+        source: '',
         minLength: 2,
         focus: function() {
           // prevent value inserted on focus
@@ -77,7 +77,7 @@
               zoomType: 'x'
             },
             title: {
-              text: 'Popularity of domain shared in Reddit comments'
+              text: title_text
             },
             subtitle: {
               text: document.ontouchstart === undefined ?
@@ -88,7 +88,7 @@
             },
             yAxis: {
               title: {
-                text: 'Number of shares'
+                text: y_text
               }
             },
             legend: {

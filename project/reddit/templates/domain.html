@@ -1,0 +1,15 @@
+{% extends "search.html" %}
+
+{% block content %}
+  {% with 'domain' as name %}
+  {{block.super}}
+  {% endwith %}
+{% endblock content %}
+
+{% block script %}
+  <script>
+  var title_text = 'Popularity of domains shared in Reddit comments';
+  var y_text = 'Number of shares';
+  </script>
+  {{block.super}}
+{% endblock script %}
