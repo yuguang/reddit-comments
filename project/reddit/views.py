@@ -12,8 +12,15 @@ class DomainViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 def domain_detail(request):
     if request.is_ajax():
-        timeline = get_list_or_404(Domain, name=request.GET['name'])
-        serializer = DomainSerializer(timeline, many=True)
-        return JSONResponse(serializer.data)
+        term = request.GET.get('term', '')
+        if term:
+            result = []
+            for domain in Domain.objects.filter(name__icontains=term).distinct('name'):
+                result.append({'id': domain.name,'label': domain.name,'value': domain.name})
+            return JSONResponse(result)
+        else:
+            timeline = get_list_or_404(Domain, name=request.GET['name'])
+            serializer = DomainSerializer(timeline, many=True)
+            return JSONResponse(serializer.data)
     else:
         return render(request, 'domains.html')
