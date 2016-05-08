@@ -16,13 +16,17 @@ class SearchModelSerializer():
         name = model.__name__.lower()
         self.name = name
         self.template = '{}.html'.format(name)
+    def unique(self, seq):
+        seen = set()
+        seen_add = seen.add
+        return [x for x in seq if not (x in seen or seen_add(x))]
     def detail(self, request):
         if request.is_ajax():
             term = request.GET.get('term', '')
             if term:
                 result = []
-                for domain in self.model.objects.filter(name__icontains=term).distinct('name'):
-                    result.append({'id': domain.name,'label': domain.name,'value': domain.name})
+                for domain in self.unique(self.model.objects.values_list('name', flat=True).filter(name__icontains=term))[:20]:
+                    result.append({'id': domain,'label': domain,'value': domain})
                 return JSONResponse(result)
             else:
                 domains = request.GET['domains'].split(',')
