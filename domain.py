@@ -26,14 +26,14 @@ if __name__ == "__main__":
         # try to reconnect if connection is reset
         while not success:
             try:
-                data_rdd = sc.textFile("s3n://reddit-comments/{}/{}".format(year, month))
+                data_rdd = sc.textFile("file:///mnt/s3/{}/{}".format(year, month))
                 success = True
             except:
                 success = False
                 time.sleep(S3_WAIT)
         comments = data_rdd.filter(lambda x: len(x) > 0).map(lambda x: json.loads(x.encode('utf8')))
-        comments.repartition(PARTITIONS)
-        comments.persist(StorageLevel.MEMORY_AND_DISK_SER)
+        # comments.repartition(PARTITIONS)
+        # comments.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
         # find the popularity of domains shared on reddit
         domainCounts = comments.flatMap(lambda x: findUrlDomain(x['body'])).map(lambda x: (x, 1)).reduceByKey(lambda x, y: x + y, PARTITIONS)
@@ -45,4 +45,4 @@ if __name__ == "__main__":
             .map(lambda x: (x['subreddit'], 1)) \
             .reduceByKey(lambda x, y: x + y, PARTITIONS)
         subredditCounts.filter(lambda x: x[1] > THRESHOLD).foreachPartition(lambda x: db.saveSubredditCounts(month, x))
-        comments.unpersist()
+        # comments.unpersist()
