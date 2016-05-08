@@ -7,6 +7,8 @@ from pyspark.sql import Row
 from pyspark.ml.feature import StopWordsRemover
 from pyspark.ml.feature import NGram
 from pyspark.ml.feature import Tokenizer, RegexTokenizer
+from pyspark import SparkContext, SparkConf, StorageLevel
+from pyspark.sql import SQLContext
 from timeconverter import *
 
 CASSANDRA_WAIT = 5
@@ -32,7 +34,11 @@ def cleanSentence(s):
     text = re.sub(re.compile(pattern), '*', s.lower())
     return filter(lambda x: not(x in '.,?![]:;\/\\()"{}-$%^&*'), text)
     
-def saveNgrams(ngramcount, rdditer, table, async=True):
+def saveNgrams(ngramcount, rdditer, table, async=True, debug=False):
+    if debug:
+        for datatuple in rdditer:
+            print datatuple
+        return
     from cassandra.cluster import Cluster
     CassandraCluster = Cluster(nodes)
 
@@ -73,10 +79,14 @@ def saveNgrams(ngramcount, rdditer, table, async=True):
 
 if __name__ == "__main__":
     timeConverter = TimeConverter()
+    conf = SparkConf().setAppName("reddit")
+    conf.set('spark.serializer', 'org.apache.spark.serializer.KryoSerializer')
+    sc = SparkContext(conf=conf, pyFiles=['utils.py', 'timeconverter.py'])
+    sqlContext = SQLContext(sc)
     # read and parse reddit data
-    data_rdd = sc.textFile("s3n://reddit-comments/2007/RC_2007-10")
+    data_rdd = sc.textFile("file:///mnt/s3/2012/RC_2012-10")
     comments = data_rdd.filter(lambda x: len(x) > 0).map(lambda x: json.loads(x.encode('utf8')))
-    comments.persist(StorageLevel.MEMORY_AND_DISK_SER)
+
     # split comments into sentences
     sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
     rdd = comments.flatMap(lambda comment: [[comment['created_utc'], comment['subreddit'], cleanSentence(sentence)] for sentence in sent_detector.tokenize(comment['body'].strip())])
@@ -108,5 +118,5 @@ if __name__ == "__main__":
         # calculate ngram totals by day
         ngramTotals = ngramRDD.map(lambda x: (x['date'], 1)).reduceByKey(lambda x, y: x + y)
 
-        ngramTotals.join(ngramCounts.filter(lambda x: x[1][2] > 1)).foreachPartition(lambda x: saveNgrams(ngram_length, 'ngrams', x))
+        ngramTotals.join(ngramCounts.filter(lambda x: x[1][2] > 1)).foreachPartition(lambda x: saveNgrams(ngram_length, 'ngrams', x, True, True))
 
