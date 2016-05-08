@@ -8,12 +8,12 @@ class Command(BaseCommand):
         for entry in Domain.objects.all():
             try:
                 entry.pk = None
-                entry.save(using='production')
+                entry.save(using='development')
             except IntegrityError:
                 pass # month and entry name should be unique
         for entry in Subreddit.objects.all():
             try:
                 entry.pk = None
-                entry.save(using='production')
+                entry.save(using='development')
             except IntegrityError:
                 pass
