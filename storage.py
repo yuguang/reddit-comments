@@ -11,10 +11,12 @@ class Mysql():
         self.connect()
         from reddit.models import Subreddit
         from django.db import IntegrityError
+        entries = []
         for line in rdd:
             d = Subreddit(month=month.replace('RC_', ''), count=line[1], name=line[0])
+            entries.append(d)
             try:
-                d.save()
+                Subreddit.objects.bulk_create(entries)
             except IntegrityError:
                 pass # month and domain name should be unique
 
@@ -22,10 +24,12 @@ class Mysql():
         self.connect()
         from reddit.models import Domain
         from django.db import IntegrityError
+        entries = []
         for line in rdd:
             d = Domain(month=month.replace('RC_', ''), count=line[1], name=line[0])
+            entries.append(d)
             try:
-                d.save()
+                Domain.objects.bulk_create(entries)
             except IntegrityError:
                 pass
 
