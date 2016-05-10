@@ -1,7 +1,5 @@
 import json
-import time
-import argparse
-import os
+import boto.s3
 import nltk, re
 from pyspark.sql import Row
 from pyspark.ml.feature import StopWordsRemover
@@ -31,8 +29,9 @@ def cleanSentence(s):
     TagsTilde = '&tilde;'
     TagsDash = '&mdash;'
     TagsHtml = '&\w;'
-    pattern = '|'.join([Url,ShortUrl,Number,Image,TagsLt,TagsGt,TagsAmps,TagsQuote,TagsTilde,TagsDash,TagsHtml])
-    text = re.sub(re.compile(pattern), '*', s.lower())
+    text = s.lower()
+    for pattern in [Url,ShortUrl,Number,Image,TagsLt,TagsGt,TagsAmps,TagsQuote,TagsTilde,TagsDash,TagsHtml]:
+        text = re.sub(re.compile(pattern), '*', text)
     return filter(lambda x: not(x in '.,?![]:;\/\\()"{}-$%^&*'), text)
 
 if __name__ == "__main__":
