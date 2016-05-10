@@ -44,14 +44,23 @@ class ElasticSearch():
         collection = 'subreddit_ngram_count'
         if test:
             collection = collection + '-test'
-        for line in rdd:
-            date, subreddit, ngram, count = line
-            key = '-'.join(map(lambda x: str(x), [ngram_length, date]))
-            response = self.client.put('subreddit_ngram_count', key, {
-                "subreddit": subreddit,
-                "ngram": ngram,
-                "count": count
-            })
+        with self.client.async() as c:
+            futures = []
+            for line in rdd:
+                date, subreddit, ngram, count, total = line
+                percentage = float(int(count) / float(total))
+                futures.append(c.post(collection, {
+                    "length": ngram_length,
+                    "date": date,
+                    "subreddit": subreddit,
+                    "ngram": ngram,
+                    "count": count,
+                    "percentage": percentage,
+                }))
+            # block until they complete
+            responses = [future.result() for future in futures]
+            # ensure they succeeded
+            [response.raise_for_status() for response in responses]
 
     def saveTotalCounts(self, ngram_length, rdd, test=False):
         self.connect()
@@ -61,7 +70,7 @@ class ElasticSearch():
         for line in rdd:
             date, count = line
             key = '-'.join(map(lambda x: str(x), [ngram_length, date]))
-            response = self.client.put('ngram_total', key, {
+            response = self.client.put(collection, key, {
               "count": count,
             })
 
@@ -128,10 +137,10 @@ class TestDatabases(unittest.TestCase):
 
 class TestElastic(unittest.TestCase):
     def test_save(self):
-        rdd = [('2007-10-29', 'reddit.com', '&gt; science disproves', 1),
-            ('2007-10-16', 'reddit.com', 'reddit well-equipped handle', 1),
-            ('2007-10-28', 'reddit.com', 'aside removing context', 1),
-            ('2007-10-23', 'politics', 'term terrorism clearly', 1)]
+        rdd = [('2007-10-29', 'reddit.com', '&gt; science disproves', 1, 100),
+            ('2007-10-16', 'reddit.com', 'reddit well-equipped handle', 1, 100),
+            ('2007-10-28', 'reddit.com', 'aside removing context', 1, 100),
+            ('2007-10-23', 'politics', 'term terrorism clearly', 1, 100)]
         db = ElasticSearch()
         db.saveNgramCounts(3, rdd)
         db.client.delete('subreddit_ngram_count-test')

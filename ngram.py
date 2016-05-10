@@ -46,7 +46,7 @@ if __name__ == "__main__":
     # split comments into sentences
     sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
     rdd = comments.flatMap(lambda comment: [[comment['created_utc'], comment['subreddit'], cleanSentence(sentence)] for sentence in sent_detector.tokenize(comment['body'].strip())])
-
+    # tokenize into words
     sentenceDataFrame = sqlContext.createDataFrame(rdd, ["date","subreddit", "sentence"])
     tokenizer = Tokenizer(inputCol="sentence", outputCol="words")
     wordsDataFrame = tokenizer.transform(sentenceDataFrame)
