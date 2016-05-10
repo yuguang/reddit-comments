@@ -11,6 +11,7 @@ from pyspark.ml.feature import Tokenizer, RegexTokenizer
 from pyspark import SparkContext, SparkConf, StorageLevel
 from pyspark.sql import SQLContext
 from timeconverter import *
+from download import *
 from storage import ElasticSearch
 from tokenizer import SentenceTokenizer
 
@@ -33,7 +34,7 @@ if __name__ == "__main__":
     timeConverter = TimeConverter()
     conf = SparkConf().setAppName("reddit")
     conf.set('spark.serializer', 'org.apache.spark.serializer.KryoSerializer')
-    sc = SparkContext(conf=conf, pyFiles=['tokenizer.py', 'timeconverter.py', 'storage.py'])
+    sc = SparkContext(conf=conf, pyFiles=['tokenizer.py', 'timeconverter.py', 'storage.py', 'download.py'])
     sqlContext = SQLContext(sc)
     tokenizer = SentenceTokenizer()
 
@@ -46,15 +47,19 @@ if __name__ == "__main__":
 
     foreign_subreddits = foreign_list()
     for year, month in folders:
+        # download the file to be parsed
+        path = download_archive(year, month)
+        if not path:
+            continue
         # read and parse reddit data
-        data_rdd = sc.textFile("s3n://reddit-comments/{}/{}".format(year, month))
+        data_rdd = sc.textFile("file://{}".format(path))
         comments = data_rdd.filter(lambda x: len(x) > 0) \
                            .map(lambda x: json.loads(x.encode('utf8'))) \
                            .filter(lambda x: not(x['subreddit'].lower() in foreign_subreddits)) \
                            .map(lambda comment: (timeConverter.toDate(comment['created_utc']), comment['subreddit'], tokenizer.segment_text(comment['body'])))
         comments.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
-        for ngram_length in range(1,3):
+        for ngram_length in range(1,5):
             # generate all ngrams
             ngramDataFrame =  sqlContext.createDataFrame(comments.flatMap(lambda comment: [[comment[0], comment[1], ngram] for ngram in tokenizer.ngrams(comment[2], ngram_length)]), ["date","subreddit", "ngram"])
 
@@ -78,5 +83,6 @@ if __name__ == "__main__":
             ngramTotals.unpersist()
 
         comments.unpersist()
+        remove_archive(year, month)
 
 

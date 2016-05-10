@@ -44,38 +44,26 @@ class ElasticSearch():
         collection = 'subreddit_ngram_count'
         if test:
             collection = collection + '-test'
-        with self.client.async() as c:
-            futures = []
-            for line in rdd:
-                date, subreddit, ngram, count = line
-                key = map(lambda x: str(x), [ngram_length, date]).join('-')
-                futures.append(c.post(collection, key, {
-                    "subreddit": subreddit,
-                    "ngram": ngram,
-                    "count": count,
-                }))
-            # block until they complete
-            responses = [future.result() for future in futures]
-            # ensure they succeeded
-            [response.raise_for_status() for response in responses]
+        for line in rdd:
+            date, subreddit, ngram, count = line
+            key = '-'.join(map(lambda x: str(x), [ngram_length, date]))
+            response = self.client.put('subreddit_ngram_count', key, {
+                "subreddit": subreddit,
+                "ngram": ngram,
+                "count": count
+            })
 
     def saveTotalCounts(self, ngram_length, rdd, test=False):
         self.connect()
         collection = 'ngram_total'
         if test:
             collection = collection + '-test'
-        with self.client.async() as c:
-            futures = []
-            for line in rdd:
-                date, count = line
-                key = map(lambda x: str(x), [ngram_length, date]).join('-')
-                futures.append(c.post(collection, key, {
-                  "count": count,
-                }))
-            # block until they complete
-            responses = [future.result() for future in futures]
-            # ensure they succeeded
-            [response.raise_for_status() for response in responses]
+        for line in rdd:
+            date, count = line
+            key = '-'.join(map(lambda x: str(x), [ngram_length, date]))
+            response = self.client.put('ngram_total', key, {
+              "count": count,
+            })
 
 class Cassandra():
     def saveNgrams(ngramcount, rdditer, table, async=True, debug=False):

@@ -1,5 +1,7 @@
 .idea/
 local_settings.py
+TODO*
+*.old.py
 ### Python template
 # Byte-compiled / optimized / DLL files
 __pycache__/
