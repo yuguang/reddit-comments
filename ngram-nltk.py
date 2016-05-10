@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     folders = bucket.list("","/*/")
     folders = filter(lambda x: len(x) > 1 and len(x[1]) > 0, map(lambda x: x.name.split('/'), folders))
-    folders = ['2007/RC_2007-10'.split('/')]
+    # folders = ['2007/RC_2007-10'.split('/')]
 
     foreign_subreddits = foreign_list()
     for year, month in folders:
@@ -60,15 +60,23 @@ if __name__ == "__main__":
 
             # count the occurrence of each ngram by date and subreddit
             ngramCounts = ngramDataFrame.map(lambda x: ((x['date'], x['subreddit'], x['ngram']), 1)).reduceByKey(lambda x, y: x + y, PARTITIONS) \
-                        .map(lambda x: (x[0][0], [x[0][1], x[0][2], x[1]]))
-            for line in ngramCounts.take(3):
-                print line
+                        .map(lambda x: (x[0][0], x[0][1], x[0][2], x[1]))
+            # for line in ngramCounts.take(3):
+            #     print line
+            # (u'2007-10-28', u'reddit.com', u'000 metric', 1)
+
             # calculate ngram totals by day
             ngramTotals = ngramDataFrame.map(lambda x: (x['date'], 1)).reduceByKey(lambda x, y: x + y, PARTITIONS)
-            for line in ngramTotals.take(3):
-                print line
+            # for line in ngramTotals.take(3):
+            #     print line
+            # (u'2007-10-22', 68976)
 
-            # db = ElasticSearch()
-            # ngramCounts.filter(lambda x: x[3] > THRESHOLD).foreachPartition(lambda x: db.saveNgramCounts(ngram_length, x))
-            # ngramTotals.filter(lambda x: x[1] > THRESHOLD).foreachPartition(lambda x: db.saveTotalCounts(ngram_length, x))
+            db = ElasticSearch()
+            ngramCounts.filter(lambda x: x[3] > THRESHOLD).foreachPartition(lambda x: db.saveNgramCounts(ngram_length, x))
+            ngramCounts.unpersist()
+            ngramTotals.filter(lambda x: x[1] > THRESHOLD).foreachPartition(lambda x: db.saveTotalCounts(ngram_length, x))
+            ngramTotals.unpersist()
+
+        comments.unpersist()
+
 
