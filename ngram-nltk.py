@@ -73,12 +73,11 @@ if __name__ == "__main__":
             # (u'2007-10-22', 68976)
 
             db = Sqlite()
-            ngramTotals.join(ngramCounts.filter(lambda x: x[1][2] > THRESHOLD))\
+            ngramTotals.join(ngramCounts.filter(lambda x: x[1][1] > THRESHOLD))\
                 .map(lambda x: (timeConverter.toDatetime(x[0]), x[1][1][0], x[1][1][1], x[1][0]))\
                 .foreachPartition(lambda x: db.saveNgramCounts(ngram_length, x))
 
             ngramCounts.unpersist()
-            ngramTotals.filter(lambda x: x[1] > THRESHOLD).foreachPartition(lambda x: db.saveTotalCounts(ngram_length, x))
             ngramTotals.unpersist()
 
         comments.unpersist()
