@@ -1,4 +1,32 @@
 
+class Sqlite():
+    def connect(self):
+        # workers must each connect individually
+        import sys, os, django
+        sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "project"))
+        os.environ["DJANGO_SETTINGS_MODULE"] = "project.settings"
+        django.setup()
+        from django.db import connection
+        cursor = connection.cursor()
+        cursor.execute('PRAGMA temp_store = MEMORY;')
+        cursor.execute('PRAGMA synchronous=OFF')
+        cursor.execute('PRAGMA default_cache_size = 10000')
+
+    def saveNgramCounts(self, ngram_length, rdd, test=False):
+        self.connect()
+        from reddit.models import Ngram
+        from django.db import IntegrityError
+        entries = []
+        for line in rdd:
+            date, ngram, count, total = line
+            percentage = float(int(count) / float(total))
+            d = Ngram(day=date, phrase=ngram, percentage=percentage)
+            entries.append(d)
+            try:
+                Ngram.objects.bulk_create(entries)
+            except IntegrityError:
+                pass
+
 class Mysql():
     def connect(self):
         # workers must each connect individually
@@ -47,12 +75,11 @@ class ElasticSearch():
         with self.client.async() as c:
             futures = []
             for line in rdd:
-                date, subreddit, ngram, count, total = line
+                date, ngram, count, total = line
                 percentage = float(int(count) / float(total))
                 futures.append(c.post(collection, {
                     "length": ngram_length,
                     "date": date,
-                    "subreddit": subreddit,
                     "ngram": ngram,
                     "count": count,
                     "percentage": percentage,

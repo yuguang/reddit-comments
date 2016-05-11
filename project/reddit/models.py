@@ -17,3 +17,11 @@ class Subreddit(models.Model):
 
     class Meta:
         unique_together = (('month', 'name'),)
+
+class Ngram(models.Model):
+    day = models.DateField()
+    percentage = models.FloatField()
+    phrase = models.CharField(max_length=500)
+
+    class Meta:
+        unique_together = (('day', 'phrase'),)
