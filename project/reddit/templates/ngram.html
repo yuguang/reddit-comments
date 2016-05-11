@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-lg-6">
+      <div class="input-group">
+      <input type="text" class="form-control" id="search-box"  placeholder="Enter terms"/>
+          <span class="input-group-btn">
+            <button class="btn btn-default" type="button">Search</button>
+          </span>
+      </div>
+    </div><!-- /.col-lg-6 -->
+  </div><!-- /.row -->
+{% endblock %}
+
+{% block script %}
+  <script>
+    $('#search-box').tokenfield({createTokensOnBlur: true});
+  </script>
+{% endblock %}

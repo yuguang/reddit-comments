@@ -4,6 +4,8 @@ from rest_framework import viewsets
 from serializers import *
 from rest_framework.decorators import api_view
 from jsonresponse import JSONResponse
+from porc import Client, Search
+import os
 
 class DomainViewSet(viewsets.ModelViewSet):
     queryset = Domain.objects.all().order_by('-month')
@@ -49,3 +51,12 @@ def domain_detail(request):
 def subreddit_detail(request):
     serializer = SearchModelSerializer(Subreddit,  SubredditSerializer)
     return serializer.detail(request)
+
+@api_view(['GET'])
+def ngram(request):
+    if request.is_ajax():
+        terms = request.GET['terms'].split(',')
+        client = Client(os.environ['ORC_API_KEY'])
+        search = Search().query('')
+        return JSONResponse(client.search('subreddit_ngram_count', search).all())
+    return render(request, 'ngram.html')
