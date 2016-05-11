@@ -3,8 +3,8 @@ import sys, os
 from boto.s3.key import Key
 
 LOCAL_PATH = '/mnt/s3/'
-START_YEAR = 2009
-START_MONTH = 11
+START_YEAR = 2014
+START_MONTH = 6
 
 bucket_name = 'reddit-comments'
 
