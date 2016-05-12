@@ -38,4 +38,4 @@ if __name__ == "__main__":
         .agg(*maxs)
         .na.fill(0))
 
-    series.select("name", concat_ws(",", *months).alias("timeseries")).write.format('com.databricks.spark.csv').save('domain.files')
+    series.select("name", concat_ws(",", *months).alias("timeseries")).write.format('com.databricks.spark.csv').save('converted.csv.files')
