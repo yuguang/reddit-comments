@@ -5,7 +5,7 @@ from serializers import *
 from rest_framework.decorators import api_view
 from jsonresponse import JSONResponse
 from porc import Client, Search
-import os
+import os, base64
 
 class DomainViewSet(viewsets.ModelViewSet):
     queryset = Domain.objects.all().order_by('-month')
@@ -24,14 +24,14 @@ class SearchModelSerializer():
         return [x for x in seq if not (x in seen or seen_add(x))]
     def detail(self, request):
         if request.is_ajax():
-            term = request.GET.get('term', '')
+            term = base64.b64decode(request.GET.get('term', ''))
             if term:
                 result = []
                 for domain in self.unique(self.model.objects.values_list('name', flat=True).filter(name__icontains=term))[:20]:
                     result.append({'id': domain,'label': domain,'value': domain})
                 return JSONResponse(result)
             else:
-                domains = request.GET['domains'].split(',')
+                domains = base64.b64decode(request.GET['domains']).split(',')
                 response_dict = {}
                 for domain in domains:
                     timeline = self.model.objects.filter(name=domain)

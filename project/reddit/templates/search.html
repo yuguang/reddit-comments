@@ -29,7 +29,7 @@
       }
       var termSearch = _.debounce(function (request, response) {
           $.getJSON('', {
-            term: extractLast(request.term)
+            term: btoa(extractLast(request.term))
           }, response);
         }, 300);
       $("#search-box").autocomplete({
@@ -58,7 +58,7 @@
         displayDomains(terms);
       });
       function displayDomains(domains) {
-        $.getJSON('', {'domains': domains.join(',')}, function (data) {
+        $.getJSON('', {'domains': btoa(domains.join(','))}, function (data) {
           var series = _.chain(data)
             .map(function (list, domain) {
               list = _.chain(list)
