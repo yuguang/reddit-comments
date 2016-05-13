@@ -62,10 +62,11 @@ class Mysql():
                 pass
 
 class ElasticSearch():
+    def __init__(self, key):
+        self.key = key
     def connect(self):
         from porc import Client
-        import os
-        self.client = Client(os.environ['ORC_API_KEY'])
+        self.client = Client(self.key)
 
     def saveNgramCounts(self, ngram_length, rdd, test=False):
         self.connect()

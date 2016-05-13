@@ -86,7 +86,7 @@ if __name__ == "__main__":
             ngramTotals = ngramDataFrame.map(lambda x: (x['date'], 1)).reduceByKey(lambda x, y: x + y, PARTITIONS)
             # (u'2007-10-22', 68976)
 
-            db = ElasticSearch()
+            db = ElasticSearch(os.environ['ORC_API_KEY'])
             ngramTotals.join(ngramCounts.filter(lambda x: x[1][1] > THRESHOLD))\
                 .map(lambda x: (timeConverter.toDatetime(x[0]), x[1][1][0], x[1][1][1], x[1][0]))\
                 .foreachPartition(lambda x: db.saveNgramCounts(ngram_length, x))
