@@ -171,6 +171,12 @@ class TestElastic(unittest.TestCase):
         db = ElasticSearch()
         db.saveNgramCounts(3, rdd)
         db.client.delete('subreddit_ngram_count-test')
+    def test_save_datetime(self):
+        from datetime import datetime
+        rdd = [(datetime(1988, 8, 16), 'reddit.com', '&gt; science disproves', 1, 100),]
+        db = ElasticSearch()
+        db.saveNgramCounts(3, rdd)
+        db.client.delete('subreddit_ngram_count-test')
 
 if __name__ == '__main__':
     unittest.main()
