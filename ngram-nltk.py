@@ -17,6 +17,8 @@ from tokenizer import SentenceTokenizer
 
 PARTITIONS = 500
 THRESHOLD = 100
+START_YEAR = 2012
+START_MONTH = 9
 
 nodes = []
 
@@ -28,7 +30,16 @@ def foreign_list():
     for line in file:
         blacklist.append(line.rstrip().lower())
     file.close()
-    return blacklist
+    return set(blacklist)
+
+def subreddit_list():
+    file = open("subreddits.txt",'r')
+    whitelist = []
+    for line in file:
+        subreddit = line.split(" ")[0]
+        whitelist.append(subreddit.lower())
+    file.close()
+    return set(whitelist)
 
 if __name__ == "__main__":
     timeConverter = TimeConverter()
@@ -42,20 +53,23 @@ if __name__ == "__main__":
     bucket = conn.get_bucket('reddit-comments')
 
     folders = bucket.list("","/*/")
-    folders = filter(lambda x: len(x) > 1 and len(x[1]) > 0, map(lambda x: x.name.split('/'), folders))
+    folders = filter(lambda x: len(x) > 1 and len(x[1]) > 0, map(lambda x: x.name.split('/'), folders))[::-1]
     # folders = ['2007/RC_2007-10'.split('/')]
 
     foreign_subreddits = foreign_list()
+    popular_subreddits = subreddit_list()
     for year, month in folders:
-        # download the file to be parsed
-        path = download_archive(year, month)
-        if not path:
-            continue
+        # if int(year) < START_YEAR or (int(year) == START_YEAR and len(month) > 3 and int(month.split('-')[1]) < START_MONTH):
+        #     continue
+        print "=========================================="
+        print "reading reddit comments for ", year, month
+        print "=========================================="
         # read and parse reddit data
-        data_rdd = sc.textFile("file://{}".format(path))
+        data_rdd = sc.textFile("s3a://reddit-comments/{}/{}".format(year, month))
         comments = data_rdd.filter(lambda x: len(x) > 0) \
                            .map(lambda x: json.loads(x.encode('utf8'))) \
                            .filter(lambda x: not(x['subreddit'].lower() in foreign_subreddits)) \
+                           .filter(lambda x: x['subreddit'].lower() in popular_subreddits) \
                            .map(lambda comment: (timeConverter.toDate(comment['created_utc']), comment['subreddit'], tokenizer.segment_text(comment['body'])))
         comments.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
@@ -72,7 +86,7 @@ if __name__ == "__main__":
             ngramTotals = ngramDataFrame.map(lambda x: (x['date'], 1)).reduceByKey(lambda x, y: x + y, PARTITIONS)
             # (u'2007-10-22', 68976)
 
-            db = Sqlite()
+            db = ElasticSearch()
             ngramTotals.join(ngramCounts.filter(lambda x: x[1][1] > THRESHOLD))\
                 .map(lambda x: (timeConverter.toDatetime(x[0]), x[1][1][0], x[1][1][1], x[1][0]))\
                 .foreachPartition(lambda x: db.saveNgramCounts(ngram_length, x))
@@ -81,6 +95,5 @@ if __name__ == "__main__":
             ngramTotals.unpersist()
 
         comments.unpersist()
-        remove_archive(year, month)
 
 

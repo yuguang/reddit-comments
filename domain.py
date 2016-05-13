@@ -24,6 +24,8 @@ if __name__ == "__main__":
     # loop through the s3 key for each month
     for year, month in folders:
         path = download_archive(year, month)
+        if not path:
+            continue
         data_rdd = sc.textFile("file://{}".format(path))
         comments = data_rdd.filter(lambda x: len(x) > 0).map(lambda x: json.loads(x.encode('utf8')))
 
