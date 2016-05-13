@@ -8,13 +8,9 @@ import argparse, os
 if __name__ == "__main__":
     conf = SparkConf().setAppName("comment-csv")
     sc = SparkContext(conf=conf)
-    sc._jsc.hadoopConfiguration().set("fs.s3n.awsAccessKeyId", os.environ['AWS_ACCESS_KEY_ID'])
-    sc._jsc.hadoopConfiguration().set("fs.s3n.awsSecretAccessKey", os.environ['AWS_SECRET_ACCESS_KEY'])
+    sc._jsc.hadoopConfiguration().set("fs.s3a.awsAccessKeyId", os.environ['AWS_ACCESS_KEY_ID'])
+    sc._jsc.hadoopConfiguration().set("fs.s3a.awsSecretAccessKey", os.environ['AWS_SECRET_ACCESS_KEY'])
     sqlContext = SQLContext(sc)
-    parser = argparse.ArgumentParser()
-    parser.add_argument("year")
-    parser.add_argument("month")
-    args = parser.parse_args()
     fields = [StructField("archived", BooleanType(), True),
               StructField("author", StringType(), True),
               StructField("author_flair_css_class", StringType(), True),
@@ -36,9 +32,7 @@ if __name__ == "__main__":
               StructField("subreddit_id", StringType(), True),
               StructField("ups", LongType(), True)]
 
-    year = args.year
-    month = args.month
-    rawDF = sqlContext.read.json("s3n://reddit-comments/{}/{}".format(year, month), StructType(fields))
+    rawDF = sqlContext.read.json("s3a://reddit-comments/*", StructType(fields))
     # filter out comment entries that don't have author names
     filteredDF = rawDF.filter(rawDF.author != '[deleted]')
     # tokenize comment into words
@@ -53,8 +47,8 @@ if __name__ == "__main__":
     commentDF.select('author', 'created_utc', 'downs', 'edited', 'gilded', 'score', 'ups', 'count')\
       .write \
       .format("com.databricks.spark.redshift") \
-      .option("url", "jdbc:redshift://52.39.253.90:5439/redditcluster?user={}&password={}".format(os.environ['REDSHIFT_USERNAME'], os.environ['REDSHIFT_PASSWORD'])) \
+      .option("url", "jdbc:redshift://redshiftcluster.czkbdecget38.us-west-2.redshift.amazonaws.com:5439/dev?user={}&password={}".format(os.environ['REDSHIFT_USERNAME'], os.environ['REDSHIFT_PASSWORD'])) \
       .option("dbtable", "reddit-comments") \
-      .option("tempdir", "s3n://yuguang-reddit") \
+      .option("tempdir", "s3a://yuguang-reddit") \
       .mode("error") \
       .save()
