@@ -7,7 +7,7 @@ sqlite3 ../project/db.sqlite3 <<EOF
 select * from reddit_subreddit;
 EOF
 # read csv in Spark and output in two column [domain, timeseries] format
-spark-submit --packages com.databricks:spark-csv_2.10:1.4.0 optimize_timeseries.py subreddit.csv
+spark-submit --executor-memory 2g --driver-memory 2g --packages com.databricks:spark-csv_2.10:1.4.0 optimize_timeseries.py subreddit.csv
 cat converted.csv.files/* > subreddit.opt.csv
 rm -rf converted.csv.files
 
@@ -17,6 +17,6 @@ sqlite3 ../project/db.sqlite3 <<EOF
 .out domain.csv
 select * from reddit_domain;
 EOF
-spark-submit --packages com.databricks:spark-csv_2.10:1.4.0 optimize_timeseries.py domain.csv
+spark-submit --executor-memory 2g --driver-memory 2g --packages com.databricks:spark-csv_2.10:1.4.0 optimize_timeseries.py domain.csv
 cat converted.csv.files/* > domain.opt.csv
 rm -rf converted.csv.files
