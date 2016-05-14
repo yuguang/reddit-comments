@@ -31,7 +31,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django_cassandra_engine',
     'reddit.apps.RedditConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,6 +40,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
 ]
+
+try:
+    from cassandra.cqlengine import columns
+    from cassandra.cqlengine.models import Model
+except ImportError:
+    pass
+else:
+    INSTALLED_APPS.append('django_cassandra_engine')
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.security.SecurityMiddleware',
@@ -77,7 +84,6 @@ WSGI_APPLICATION = 'project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.9/ref/settings/#databases
 
-import os
 DATABASES = {
     'default': {
         'ENGINE': 'django_cassandra_engine',
