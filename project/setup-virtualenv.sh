@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION=1.9.1
+VERSION=15.0.1
 VIRTUALENV="virtualenv-${VERSION}.tar.gz"
 
 read -r -d '' HELP <<EOF
