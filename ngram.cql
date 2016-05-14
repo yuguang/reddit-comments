@@ -1,9 +1,8 @@
-CREATE TABLE ngrams (
-    ngram text,
-    subreddit text,
+CREATE TABLE ngram (
+    phrase text,
     time_bucket timestamp,
     date timestamp,
-    count int,
-    percentage decimal,
-    PRIMARY KEY ((ngram, subreddit, time_bucket), date)
+    absolute_count int,
+    percentage float,
+    PRIMARY KEY ((phrase, time_bucket), date)
 ) WITH CLUSTERING ORDER BY (date DESC);

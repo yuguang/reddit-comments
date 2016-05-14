@@ -1,3 +1,6 @@
+import time
+
+MYSQL_SLEEP = 5
 
 class Sqlite():
     def connect(self):
@@ -27,11 +30,12 @@ class Sqlite():
             except IntegrityError:
                 pass
 
-class Mysql():
+class Mysql(Sqlite):
     def connect(self):
         # workers must each connect individually
         import sys, os, django
         sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "project"))
+        # sys.path.append(os.path.join("/home/ubuntu/reddit-comments", "project"))
         os.environ["DJANGO_SETTINGS_MODULE"] = "project.settings"
         django.setup()
 
@@ -76,7 +80,7 @@ class ElasticSearch():
         with self.client.async() as c:
             futures = []
             for line in rdd:
-                date, ngram, count, total = line
+                date, subreddit, ngram, count, total = line
                 percentage = float(int(count) / float(total))
                 futures.append(c.post(collection, {
                     "length": ngram_length,
@@ -103,45 +107,50 @@ class ElasticSearch():
             })
 
 class Cassandra():
-    def saveNgrams(ngramcount, rdditer, table, async=True, debug=False):
+    def __init__(self):
+        self.nodes = ['ec2-52-38-240-73.us-west-2.compute.amazonaws.com',
+                      'ec2-52-10-219-45.us-west-2.compute.amazonaws.com',
+                      'ec2-52-36-44-251.us-west-2.compute.amazonaws.com',
+                      'ec2-52-27-44-212.us-west-2.compute.amazonaws.com']
+        self.keyspace = 'reddit'
+        self.table = 'ngram'
+
+    def set_table(self, table):
+        self.table = table
+
+    def saveNgramCounts(self, ngramcount, rdditer, async=True, debug=False):
         if debug:
             for datatuple in rdditer:
                 print datatuple
             return
         from cassandra.cluster import Cluster
+        from timeconverter import TimeConverter
         import time
         CASSANDRA_WAIT = 5
         QUERY_WAIT = 0.001
-        NODES = []
-        CassandraCluster = Cluster(NODES)
+        CassandraCluster = Cluster(self.nodes)
 
         success = False
         #try to reconnect if connection is down
         while not success:
             try:
-                session = CassandraCluster.connect(keyspace)
+                session = CassandraCluster.connect(self.keyspace)
                 session.default_timeout = 60
                 success = True
             except:
                 success = False
                 time.sleep(CASSANDRA_WAIT)
 
-        query = "INSERT INTO %s (ngram, subreddit, time_bucket, date, count, percentage) VALUES (?, ?, ?, ?, ? ,?)" %(table,)
+        query = "INSERT INTO %s (phrase, time_bucket, date, absolute_count, percentage) VALUES (?, ?, ?, ?, ?)" % (self.table,)
         prepared = session.prepare(query)
 
         timeConverter = TimeConverter()
-        for datatuple in rdditer:
-            # ('2007-10-23', (126827, [u'politics', u'term terrorism clearly', 1]))
-            date = datatuple[0]
+        for line in rdditer:
+            date, ngram, count, total = line
+            percentage = float(int(count) / float(total))
             time_bucket = timeConverter.toTimebucket(date)
 
-            total = float(datatuple[1][0])
-            subreddit = str(datatuple[1][0][0])
-            ngram = str(datatuple[1][0][1])
-            count = int(datatuple[1][0][2])
-            percentage = float(count) / total
-
-            bound = prepared.bind((ngram, subreddit, time_bucket, date, count, percentage))
+            bound = prepared.bind((ngram, timeConverter.toDatetime(time_bucket), timeConverter.toDatetime(date), count, percentage))
             if async:
                 session.execute_async(bound)
                 time.sleep(QUERY_WAIT)
@@ -151,7 +160,8 @@ class Cassandra():
         session.shutdown()
 
 
-import unittest
+import unittest, os
+
 
 class TestDatabases(unittest.TestCase):
     def test_connect(self):
@@ -160,7 +170,7 @@ class TestDatabases(unittest.TestCase):
     def test_save(self):
         from reddit.models import Domain
         d = Domain(month='2007-01', count=1, name='none')
-        d.save()
+        d.using('production').save()
         d.delete()
 
 class TestElastic(unittest.TestCase):
@@ -169,15 +179,27 @@ class TestElastic(unittest.TestCase):
             ('2007-10-16', 'reddit.com', 'reddit well-equipped handle', 1, 100),
             ('2007-10-28', 'reddit.com', 'aside removing context', 1, 100),
             ('2007-10-23', 'politics', 'term terrorism clearly', 1, 100)]
-        db = ElasticSearch()
-        db.saveNgramCounts(3, rdd)
+        db = ElasticSearch(os.environ['ORC_API_KEY'])
+        db.saveNgramCounts(3, rdd, True)
         db.client.delete('subreddit_ngram_count-test')
     def test_save_datetime(self):
         from datetime import datetime
         rdd = [(datetime(1988, 8, 16), 'reddit.com', '&gt; science disproves', 1, 100),]
-        db = ElasticSearch()
-        db.saveNgramCounts(3, rdd)
+        db = ElasticSearch(os.environ['ORC_API_KEY'])
+        db.saveNgramCounts(3, rdd, True)
         db.client.delete('subreddit_ngram_count-test')
+
+class TestCassandra(unittest.TestCase):
+    def test_save(self):
+        rdd = [('2007-10-23', 'term terrorism clearly', 1, 10000000)]
+        db = Cassandra()
+        db.saveNgramCounts(3, rdd)
+        import sys, os, django, datetime
+        sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "project"))
+        os.environ["DJANGO_SETTINGS_MODULE"] = "project.settings"
+        django.setup()
+        from reddit.models import Ngram
+        self.assertEqual(Ngram.objects.get(phrase='term terrorism clearly', date=datetime.date(2007, 10, 23), time_bucket=datetime.date(2007, 1, 1)).absolute_count, 1)
 
 if __name__ == '__main__':
     unittest.main()

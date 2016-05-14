@@ -10,15 +10,15 @@ from pyspark.ml.feature import NGram
 from pyspark.ml.feature import Tokenizer, RegexTokenizer
 from pyspark import SparkContext, SparkConf, StorageLevel
 from pyspark.sql import SQLContext
-from timeconverter import *
+from timeconverter import TimeConverter
 from download import *
-from storage import ElasticSearch, Sqlite
+from storage import ElasticSearch, Sqlite, Mysql, Cassandra
 from tokenizer import SentenceTokenizer
 
-PARTITIONS = 500
+PARTITIONS = 100
 THRESHOLD = 100
-START_YEAR = 2012
-START_MONTH = 9
+START_YEAR = 2009
+START_MONTH = 4
 
 nodes = []
 
@@ -36,8 +36,7 @@ def subreddit_list():
     file = open("subreddits.txt",'r')
     whitelist = []
     for line in file:
-        subreddit = line.split(" ")[0]
-        whitelist.append(subreddit.lower())
+        whitelist.append(line.rstrip().lower())
     file.close()
     return set(whitelist)
 
@@ -53,14 +52,14 @@ if __name__ == "__main__":
     bucket = conn.get_bucket('reddit-comments')
 
     folders = bucket.list("","/*/")
-    folders = filter(lambda x: len(x) > 1 and len(x[1]) > 0, map(lambda x: x.name.split('/'), folders))[::-1]
+    folders = filter(lambda x: len(x) > 1 and len(x[1]) > 0, map(lambda x: x.name.split('/'), folders))
     # folders = ['2007/RC_2007-10'.split('/')]
 
     foreign_subreddits = foreign_list()
     popular_subreddits = subreddit_list()
     for year, month in folders:
-        # if int(year) < START_YEAR or (int(year) == START_YEAR and len(month) > 3 and int(month.split('-')[1]) < START_MONTH):
-        #     continue
+        if int(year) < START_YEAR or (int(year) == START_YEAR and len(month) > 3 and int(month.split('-')[1]) < START_MONTH):
+            continue
         print "=========================================="
         print "reading reddit comments for ", year, month
         print "=========================================="
@@ -74,8 +73,12 @@ if __name__ == "__main__":
         comments.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
         for ngram_length in range(1,5):
+            comments_rdd = comments.flatMap(lambda comment: [[comment[0], comment[1], ngram] for ngram in tokenizer.ngrams(comment[2], ngram_length)])
+            # make sure rdd has at least one item
+            if comments_rdd.countApprox(60 * 2, .9) < 1:
+                continue
             # generate all ngrams
-            ngramDataFrame =  sqlContext.createDataFrame(comments.flatMap(lambda comment: [[comment[0], comment[1], ngram] for ngram in tokenizer.ngrams(comment[2], ngram_length)]), ["date","subreddit", "ngram"])
+            ngramDataFrame =  sqlContext.createDataFrame(comments_rdd, ["date","subreddit", "ngram"])
 
             # count the occurrence of each ngram by date for all of subreddit
             ngramCounts = ngramDataFrame.map(lambda x: ((x['date'], x['ngram']), 1)).reduceByKey(lambda x, y: x + y, PARTITIONS) \
@@ -85,11 +88,11 @@ if __name__ == "__main__":
             # calculate ngram totals by day
             ngramTotals = ngramDataFrame.map(lambda x: (x['date'], 1)).reduceByKey(lambda x, y: x + y, PARTITIONS)
             # (u'2007-10-22', 68976)
-
-            db = ElasticSearch(os.environ['ORC_API_KEY'])
-            ngramTotals.join(ngramCounts.filter(lambda x: x[1][1] > THRESHOLD))\
-                .map(lambda x: (timeConverter.toDatetime(x[0]), x[1][1][0], x[1][1][1], x[1][0]))\
-                .foreachPartition(lambda x: db.saveNgramCounts(ngram_length, x))
+            totalSum = ngramTotals.map(lambda x: x[1]).sum()
+            db = Cassandra()
+            resultRDD = ngramTotals.join(ngramCounts.filter(lambda x: x[1][1] > int(1e-7 * totalSum)))\
+                .map(lambda x: (x[0], x[1][1][0], x[1][1][1], x[1][0]))
+            resultRDD.foreachPartition(lambda x: db.saveNgramCounts(ngram_length, x))
 
             ngramCounts.unpersist()
             ngramTotals.unpersist()
