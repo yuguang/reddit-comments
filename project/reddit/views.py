@@ -4,7 +4,6 @@ from rest_framework import viewsets
 from serializers import *
 from rest_framework.decorators import api_view
 from jsonresponse import JSONResponse
-from porc import Client, Search
 import os, base64
 
 class DomainViewSet(viewsets.ModelViewSet):
@@ -15,7 +14,7 @@ class SearchModelSerializer():
     def __init__(self, model, serializer):
         self.model = model
         self.serializer = serializer
-        name = model.__name__.lower()
+        name = model.__name__.lower().replace('timeseries', '')
         self.name = name
         self.template = '{}.html'.format(name)
     def unique(self, seq):
@@ -24,19 +23,21 @@ class SearchModelSerializer():
         return [x for x in seq if not (x in seen or seen_add(x))]
     def detail(self, request):
         if request.is_ajax():
+            # get suggestions for term
             term = base64.b64decode(request.GET.get('term', ''))
             if term:
                 result = []
-                for domain in self.unique(self.model.objects.values_list('name', flat=True).filter(name__icontains=term))[:20]:
+                for domain in self.model.objects.values_list('name', flat=True).filter(name__icontains=term)[:20]:
                     result.append({'id': domain,'label': domain,'value': domain})
                 return JSONResponse(result)
             else:
+                # get a time series matching search terms
                 domains = base64.b64decode(request.GET['domains']).split(',')
                 response_dict = {}
                 for domain in domains:
-                    timeline = self.model.objects.filter(name=domain)
+                    timeline = self.model.objects.get(name=domain)
                     if timeline:
-                        serializer = self.serializer(timeline, many=True)
+                        serializer = self.serializer(timeline)
                         response_dict[domain] = serializer.data
                 return JSONResponse(response_dict)
         else:
@@ -44,19 +45,16 @@ class SearchModelSerializer():
 
 @api_view(['GET'])
 def domain_detail(request):
-    serializer = SearchModelSerializer(Domain, DomainSerializer)
+    serializer = SearchModelSerializer(DomainTimeseries, DomainSerializer)
     return serializer.detail(request)
 
 @api_view(['GET'])
 def subreddit_detail(request):
-    serializer = SearchModelSerializer(Subreddit,  SubredditSerializer)
+    serializer = SearchModelSerializer(SubredditTimeseries,  SubredditSerializer)
     return serializer.detail(request)
 
 @api_view(['GET'])
 def ngram(request):
     if request.is_ajax():
         terms = request.GET['terms'].split(',')
-        client = Client(os.environ['ORC_API_KEY'])
-        search = Search().query('')
-        return JSONResponse(client.search('subreddit_ngram_count', search).all())
     return render(request, 'ngram.html')

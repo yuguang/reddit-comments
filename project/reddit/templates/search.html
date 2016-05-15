@@ -58,21 +58,33 @@
         displayDomains(terms);
       });
       function displayDomains(domains) {
+        var years = _.range(2008,2016);
+        var months = _.range(1,13);
+        var year_months = [[2007,10],[2007,11],[2007,12]];
+        _.each(years, function(y){
+          _.each(months, function(m) {
+            year_months.push([y, m]);
+          });
+        });
         $.getJSON('', {'domains': btoa(domains.join(','))}, function (data) {
           var series = _.chain(data)
             .map(function (list, domain) {
-              list = _.chain(list)
-                .uniq('month')
-                .map(function (point) {
-                  var date = point.month.split('-');
-                  return [Date.UTC(date[0], date[1]), point.count];
+              var timeseries = list.series.split(',');
+              timeseries.pop();
+              list = _.chain(timeseries)
+                .zip(year_months)
+                .map(function(tuple) {
+                  date = tuple[1];
+                  point = tuple[0];
+                  return [Date.UTC(date[0], date[1]), parseInt(point)];
                 })
                 .value();
+              console.log(_.filter(list, function(item) {return _.isNumber(item[1])}));
 
               return {
                 type: 'area',
                 name: domain,
-                data: list
+                data: _.filter(list, function(item) {return item[1] > 0})
               }
             })
             .value();
