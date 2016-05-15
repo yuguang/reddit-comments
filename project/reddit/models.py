@@ -11,8 +11,8 @@ class Domain(models.Model):
         unique_together = (('month', 'name'),)
 
 class DomainTimeseries(models.Model):
-    series = models.BinaryField()
     name = models.CharField(max_length=200,primary_key=True)
+    series = models.TextField()
 
 class Subreddit(models.Model):
     month = models.CharField(max_length=30)
@@ -23,8 +23,8 @@ class Subreddit(models.Model):
         unique_together = (('month', 'name'),)
 
 class SubredditTimeseries(models.Model):
-    series = models.BinaryField()
     name = models.CharField(max_length=200,primary_key=True)
+    series = models.TextField()
 
 
 try:
