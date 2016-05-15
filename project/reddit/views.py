@@ -58,3 +58,6 @@ def ngram(request):
     if request.is_ajax():
         terms = request.GET['terms'].split(',')
     return render(request, 'ngram.html')
+
+def home(request):
+    return render(request, 'home.html')

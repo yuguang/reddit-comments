@@ -30,6 +30,7 @@ urlpatterns = [
     url(r'^domains/', views.domain_detail, name='domain_detail'),
     url(r'^subreddits/', views.subreddit_detail, name='subreddit_detail'),
     url(r'^ngrams/', views.ngram, name='ngram_viewer'),
-    url(r'^', include(router.urls)),
-    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^$', views.home, name='index'),
+    # url(r'^', include(router.urls)),
+    # url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

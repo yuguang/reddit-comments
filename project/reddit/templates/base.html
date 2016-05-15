@@ -16,7 +16,15 @@
 <body>
 <nav class="navbar navbar-default">
   <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">
+        <img src="https://www.reddit.com/favicon.ico" height="20" alt="github">
+      </a>
+    </div>
     <ul class="nav navbar-nav">
+      <li><a href="{% url 'domain_detail' %}">Popular Domains Shared on Reddit</a></li>
+      <li><a href="{% url 'subreddit_detail' %}">Breakdown of Subreddits</a></li>
+      <li><a href="https://github.com/yuguang/reddit-comments">Github</a></li>
     </ul>
   </div>
 </nav>
