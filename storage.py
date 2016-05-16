@@ -42,28 +42,14 @@ class Mysql(Sqlite):
     def saveSubredditCounts(self, month, rdd):
         self.connect()
         from reddit.models import Subreddit
-        from django.db import IntegrityError
-        entries = []
         for line in rdd:
-            d = Subreddit(month=month.replace('RC_', ''), count=line[1], name=line[0])
-            entries.append(d)
-            try:
-                Subreddit.objects.bulk_create(entries)
-            except IntegrityError:
-                pass # month and domain name should be unique
+            Subreddit.objects.update_or_create(month=month.replace('RC_', ''), count=line[1], name=line[0])
 
     def saveDomains(self, month, rdd):
         self.connect()
         from reddit.models import Domain
-        from django.db import IntegrityError
-        entries = []
         for line in rdd:
-            d = Domain(month=month.replace('RC_', ''), count=line[1], name=line[0])
-            entries.append(d)
-            try:
-                Domain.objects.bulk_create(entries)
-            except IntegrityError:
-                pass
+            Domain.objects.update_or_create(month=month.replace('RC_', ''), count=line[1], name=line[0])
 
 class ElasticSearch():
     def __init__(self, key):
