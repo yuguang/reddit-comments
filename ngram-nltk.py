@@ -7,10 +7,10 @@ from download import *
 from storage import Cassandra
 from tokenizer import SentenceTokenizer
 
-PARTITIONS = 100
+PARTITIONS = 20
 THRESHOLD = 100
-START_YEAR = 2009
-START_MONTH = 4
+START_YEAR = 2011
+START_MONTH = 6
 
 def foreign_list():
     file = open("foreign.txt",'r')
@@ -26,7 +26,7 @@ def subreddit_list():
     for line in file:
         whitelist.append(line.rstrip().lower())
     file.close()
-    return set(whitelist)
+    return set(whitelist[:1000])
 
 if __name__ == "__main__":
     timeConverter = TimeConverter()
@@ -57,23 +57,26 @@ if __name__ == "__main__":
                            .filter(lambda x: not(x['subreddit'].lower() in foreign_subreddits)) \
                            .filter(lambda x: x['subreddit'].lower() in popular_subreddits) \
                            .map(lambda comment: (timeConverter.toDate(comment['created_utc']), tokenizer.segment_text(comment['body'])))
-        comments.persist(StorageLevel.MEMORY_AND_DISK_SER)
+        comments.repartition(PARTITIONS)
+        comments.persist(StorageLevel.MEMORY_ONLY)
 
-        for ngram_length in range(1,5):
-            comments_rdd = comments.flatMap(lambda comment: [[comment[0], comment[1], ngram] for ngram in tokenizer.ngrams(comment[2], ngram_length)])
-            # make sure rdd has at least one item
-            if comments_rdd.countApprox(60 * 2, .9) < 1:
-                continue
+        for ngram_length in range(1,3):
+            comments_rdd = comments.flatMap(lambda comment: [[comment[0], ngram] for ngram in tokenizer.ngrams(comment[1], ngram_length)])
             # generate all ngrams
             ngramDataFrame =  sqlContext.createDataFrame(comments_rdd, ["date", "ngram"])
+            comments_rdd.unpersist()
+            ngramDataFrame.persist(StorageLevel.MEMORY_ONLY)
 
             # count the occurrence of each ngram by date for all of subreddit
             ngramCounts = ngramDataFrame.map(lambda x: ((x['date'], x['ngram']), 1)).reduceByKey(lambda x, y: x + y, PARTITIONS) \
                         .map(lambda x: (x[0][0], [x[0][1], x[1]]))
+            ngramCounts.persist(StorageLevel.MEMORY_ONLY)
             # ex. (u'2007-10-28', [u'000 metric', 1])
 
             # calculate ngram totals by day
             ngramTotals = ngramDataFrame.map(lambda x: (x['date'], 1)).reduceByKey(lambda x, y: x + y, PARTITIONS)
+            ngramDataFrame.unpersist()
+            ngramTotals.persist(StorageLevel.MEMORY_ONLY)
             # ex. (u'2007-10-22', 68976)
             totalSum = ngramTotals.map(lambda x: x[1]).sum()
             db = Cassandra()
