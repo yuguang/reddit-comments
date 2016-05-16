@@ -69,7 +69,7 @@ if __name__ == "__main__":
                            .map(lambda x: json.loads(x.encode('utf8'))) \
                            .filter(lambda x: not(x['subreddit'].lower() in foreign_subreddits)) \
                            .filter(lambda x: x['subreddit'].lower() in popular_subreddits) \
-                           .map(lambda comment: (timeConverter.toDate(comment['created_utc']), comment['subreddit'], tokenizer.segment_text(comment['body'])))
+                           .map(lambda comment: (timeConverter.toDate(comment['created_utc']), tokenizer.segment_text(comment['body'])))
         comments.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
         for ngram_length in range(1,5):
@@ -78,7 +78,7 @@ if __name__ == "__main__":
             if comments_rdd.countApprox(60 * 2, .9) < 1:
                 continue
             # generate all ngrams
-            ngramDataFrame =  sqlContext.createDataFrame(comments_rdd, ["date","subreddit", "ngram"])
+            ngramDataFrame =  sqlContext.createDataFrame(comments_rdd, ["date", "ngram"])
 
             # count the occurrence of each ngram by date for all of subreddit
             ngramCounts = ngramDataFrame.map(lambda x: ((x['date'], x['ngram']), 1)).reduceByKey(lambda x, y: x + y, PARTITIONS) \
