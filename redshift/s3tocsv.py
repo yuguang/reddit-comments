@@ -65,5 +65,5 @@ if __name__ == "__main__":
           .option("url", "jdbc:redshift://{}/dev?user={}&password={}".format(os.environ['REDSHIFT_ENDPOINT'], os.environ['REDSHIFT_USERNAME'], os.environ['REDSHIFT_PASSWORD'])) \
           .option("dbtable", "reddit_comments") \
           .option("tempdir", "s3a://yuguang-reddit") \
-          .mode("error") \
+          .mode("append") \
           .save()
