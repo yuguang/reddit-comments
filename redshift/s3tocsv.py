@@ -40,15 +40,15 @@ if __name__ == "__main__":
     wordsDataFrame = tokenizer.transform(filteredDF)
 
     # count the number of words in comments
-    commentDF = wordsDataFrame.select('author', 'created_utc', 'downs', 'edited', 'gilded', 'score', 'ups', 'body', explode(wordsDataFrame.words).alias("words")) \
-            .groupBy(['author', 'created_utc', 'downs', 'edited', 'gilded', 'score', 'ups', 'body']) \
+    commentDF = wordsDataFrame.select('author', 'subreddit', 'created_utc', 'downs', 'gilded', 'score', 'ups', 'body', explode(wordsDataFrame.words).alias("words")) \
+            .groupBy(['author', 'subreddit', 'created_utc', 'downs', 'gilded', 'score', 'ups', 'body']) \
             .count()
     # write back to a redshift table
-    commentDF.select('author', 'created_utc', 'downs', 'edited', 'gilded', 'score', 'ups', 'count')\
+    commentDF.select('author', 'subreddit', 'created_utc', 'downs', 'gilded', 'score', 'ups', 'count')\
       .write \
       .format("com.databricks.spark.redshift") \
-      .option("url", "jdbc:redshift://redshiftcluster.czkbdecget38.us-west-2.redshift.amazonaws.com:5439/dev?user={}&password={}".format(os.environ['REDSHIFT_USERNAME'], os.environ['REDSHIFT_PASSWORD'])) \
-      .option("dbtable", "reddit-comments") \
+      .option("url", "jdbc:redshift://{}/dev?user={}&password={}".format(os.environ['REDSHIFT_ENDPOINT'], os.environ['REDSHIFT_USERNAME'], os.environ['REDSHIFT_PASSWORD'])) \
+      .option("dbtable", "reddit_comments") \
       .option("tempdir", "s3a://yuguang-reddit") \
       .mode("error") \
       .save()
