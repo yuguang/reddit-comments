@@ -13,6 +13,7 @@ class Domain(models.Model):
 class DomainTimeseries(models.Model):
     name = models.CharField(max_length=200,primary_key=True)
     series = models.TextField()
+    total = models.BigIntegerField()
 
 class Subreddit(models.Model):
     month = models.CharField(max_length=30)
@@ -25,6 +26,7 @@ class Subreddit(models.Model):
 class SubredditTimeseries(models.Model):
     name = models.CharField(max_length=200,primary_key=True)
     series = models.TextField()
+    total = models.BigIntegerField()
 
 
 try:

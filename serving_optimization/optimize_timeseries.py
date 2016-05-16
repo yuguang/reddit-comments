@@ -23,19 +23,30 @@ if __name__ == "__main__":
         .options(header='true') \
         .load(args.file, schema=StructType(fields))
 
+    # calculate the totals summed across all dates
+    countDF = df.groupBy('name').agg({"count": "sum"}).withColumnRenamed('sum(count)', 'total')
+
+    # read from the column months
     months = sorted(df.select("month")
         .distinct()
         .map(lambda row: row[0])
         .collect())
 
+    # find the counts for each month
     cols = [when(col("month") == m, col("count")).otherwise(None).alias(m)
         for m in  months]
     maxs = [max(col(m)).alias(m) for m in months]
 
+    # reformat dataframe
     series = (df
         .select(col("name"), *cols)
         .groupBy("name")
         .agg(*maxs)
         .na.fill(0))
 
-    series.select("name", concat_ws(",", *months).alias("timeseries")).write.format('com.databricks.spark.csv').save('converted.csv.files')
+    compressedTimeseries = series.select("name", concat_ws(",", *months).alias("timeseries"))
+
+    # add totals to timeseries table
+    resultDF = compressedTimeseries.join(countDF, 'name', 'inner')
+
+    resultDF.write.format('com.databricks.spark.csv').save('converted.csv.files')
