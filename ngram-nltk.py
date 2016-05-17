@@ -7,7 +7,7 @@ from download import *
 from storage import Cassandra
 from tokenizer import SentenceTokenizer
 
-PARTITIONS = 20
+PARTITIONS = 100
 START_YEAR = 2007
 START_MONTH = 9
 
@@ -32,6 +32,7 @@ if __name__ == "__main__":
     timeConverter = TimeConverter()
     conf = SparkConf().setAppName("reddit")
     conf.set('spark.serializer', 'org.apache.spark.serializer.KryoSerializer')
+    conf.set('spark.local.dir', '/mnt/work')
     sc = SparkContext(conf=conf, pyFiles=['tokenizer.py', 'timeconverter.py', 'storage.py', 'download.py'])
     sqlContext = SQLContext(sc)
     tokenizer = SentenceTokenizer()
@@ -40,19 +41,17 @@ if __name__ == "__main__":
     bucket = conn.get_bucket('reddit-comments')
 
     folders = bucket.list("","/*/")
-    folders = filter(lambda x: len(x) > 1 and len(x[1]) > 0, map(lambda x: x.name.split('/'), folders))[::-1]
+    folders = filter(lambda x: len(x) > 1 and len(x[1]) > 0, map(lambda x: x.name.split('/'), folders))
 
     foreign_subreddits = foreign_list()
     for year, month in folders:
+        path = download_archive(year, month)
+        if not path:
+            continue
         y = int(year)
         m = int(month.split('-')[1])
-        if y < START_YEAR or (y == START_YEAR and len(month) > 3 and m < START_MONTH):
-            continue
-        print "=========================================="
-        print "reading reddit comments for ", year, month
-        print "=========================================="
         # read and parse reddit data
-        data_rdd = sc.textFile("s3a://reddit-comments/{}/{}".format(year, month))
+        data_rdd = sc.textFile("file://{}".format(path))
         # start with some of the most popular subreddits and add more for each year, since only the percentage counts for ngrams matter
         popular_subreddits = subreddit_list((2015 - y + (12 - m)/float(12))*300 + 300)
         comments = data_rdd.filter(lambda x: len(x) > 0) \
@@ -61,25 +60,22 @@ if __name__ == "__main__":
                            .filter(lambda x: x['subreddit'].lower() in popular_subreddits) \
                            .map(lambda comment: (timeConverter.toDate(comment['created_utc']), tokenizer.segment_text(comment['body'])))
         comments.repartition(PARTITIONS)
-        comments.persist(StorageLevel.MEMORY_ONLY)
+        comments.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
         for ngram_length in range(1,3):
             comments_rdd = comments.flatMap(lambda comment: [[comment[0], ngram] for ngram in tokenizer.ngrams(comment[1], ngram_length)])
             # generate all ngrams
             ngramDataFrame =  sqlContext.createDataFrame(comments_rdd, ["date", "ngram"])
             comments_rdd.unpersist()
-            ngramDataFrame.persist(StorageLevel.MEMORY_ONLY)
 
             # count the occurrence of each ngram by date for all of subreddit
             ngramCounts = ngramDataFrame.map(lambda x: ((x['date'], x['ngram']), 1)).reduceByKey(lambda x, y: x + y, PARTITIONS) \
                         .map(lambda x: (x[0][0], [x[0][1], x[1]]))
-            ngramCounts.persist(StorageLevel.MEMORY_ONLY)
             # ex. (u'2007-10-28', [u'000 metric', 1])
 
             # calculate ngram totals by day
             ngramTotals = ngramDataFrame.map(lambda x: (x['date'], 1)).reduceByKey(lambda x, y: x + y, PARTITIONS)
             ngramDataFrame.unpersist()
-            ngramTotals.persist(StorageLevel.MEMORY_ONLY)
             # ex. (u'2007-10-22', 68976)
 
             # find the total for a day
@@ -100,5 +96,6 @@ if __name__ == "__main__":
             ngramTotals.unpersist()
 
         comments.unpersist()
+        remove_archive(year, month)
 
 
