@@ -93,12 +93,12 @@ class ElasticSearch():
             })
 
 class Cassandra():
-    def __init__(self):
+    def __init__(self, keyspace='reddit'):
         self.nodes = ['ec2-52-38-240-73.us-west-2.compute.amazonaws.com',
                       'ec2-52-10-219-45.us-west-2.compute.amazonaws.com',
                       'ec2-52-36-44-251.us-west-2.compute.amazonaws.com',
                       'ec2-52-27-44-212.us-west-2.compute.amazonaws.com']
-        self.keyspace = 'reddit'
+        self.keyspace = keyspace
         self.table = 'ngram'
 
     def set_table(self, table):
