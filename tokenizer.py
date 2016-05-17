@@ -101,6 +101,7 @@ class SentenceTokenizer():
         ReTagsTilde = re.compile('&tilde;?')
         ReTagsDash = re.compile('&mdash;?')
         ReTagsHtml = re.compile('&\w;')
+        ReNonAlphaSpace = re.compile('([^\s\w]|_)+')
 
         # Split (tokenize) text into words. Count whitespace as
         # words. Keeping this information allows us to distinguish between
@@ -119,6 +120,7 @@ class SentenceTokenizer():
         full_text = ReTagsHtml.sub("HTMLTags", full_text)
 
         full_text = ReImage.sub("IMGsub", full_text)
+        full_text = ReNonAlphaSpace.sub('', full_text)
 
         text_words_sp = self.tokenizer.tokenize(full_text)
 
@@ -174,7 +176,7 @@ class SentenceTokenizer():
             if len(tok) > 0:
                 sentence.append(tok)
             # The sentence has been procssed =&gt; save it
-            sentences.append(filter(lambda x: not(x in '.,?![]:;\/\\()"{}-$%^&*'), sentence))
+            sentences.append(sentence)
 
         # return the resulting list of sentences
         return sentences

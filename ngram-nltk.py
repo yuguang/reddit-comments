@@ -8,9 +8,8 @@ from storage import Cassandra
 from tokenizer import SentenceTokenizer
 
 PARTITIONS = 20
-THRESHOLD = 100
-START_YEAR = 2011
-START_MONTH = 6
+START_YEAR = 2007
+START_MONTH = 9
 
 def foreign_list():
     file = open("foreign.txt",'r')
@@ -20,13 +19,14 @@ def foreign_list():
     file.close()
     return set(blacklist)
 
-def subreddit_list():
+def subreddit_list(slice):
+    slice = int(slice)
     file = open("subreddits.txt",'r')
     whitelist = []
     for line in file:
         whitelist.append(line.rstrip().lower())
     file.close()
-    return set(whitelist[:1000])
+    return set(whitelist[:slice])
 
 if __name__ == "__main__":
     timeConverter = TimeConverter()
@@ -40,18 +40,21 @@ if __name__ == "__main__":
     bucket = conn.get_bucket('reddit-comments')
 
     folders = bucket.list("","/*/")
-    folders = filter(lambda x: len(x) > 1 and len(x[1]) > 0, map(lambda x: x.name.split('/'), folders))
+    folders = filter(lambda x: len(x) > 1 and len(x[1]) > 0, map(lambda x: x.name.split('/'), folders))[::-1]
 
     foreign_subreddits = foreign_list()
-    popular_subreddits = subreddit_list()
     for year, month in folders:
-        if int(year) < START_YEAR or (int(year) == START_YEAR and len(month) > 3 and int(month.split('-')[1]) < START_MONTH):
+        y = int(year)
+        m = int(month.split('-')[1])
+        if y < START_YEAR or (y == START_YEAR and len(month) > 3 and m < START_MONTH):
             continue
         print "=========================================="
         print "reading reddit comments for ", year, month
         print "=========================================="
         # read and parse reddit data
         data_rdd = sc.textFile("s3a://reddit-comments/{}/{}".format(year, month))
+        # start with some of the most popular subreddits and add more for each year, since only the percentage counts for ngrams matter
+        popular_subreddits = subreddit_list((2015 - y + (12 - m)/float(12))*300 + 300)
         comments = data_rdd.filter(lambda x: len(x) > 0) \
                            .map(lambda x: json.loads(x.encode('utf8'))) \
                            .filter(lambda x: not(x['subreddit'].lower() in foreign_subreddits)) \
@@ -78,11 +81,18 @@ if __name__ == "__main__":
             ngramDataFrame.unpersist()
             ngramTotals.persist(StorageLevel.MEMORY_ONLY)
             # ex. (u'2007-10-22', 68976)
-            totalSum = ngramTotals.map(lambda x: x[1]).sum()
+
+            # find the total for a day
+            totalSum = ngramTotals.first()[1]
             db = Cassandra()
 
+            if ngram_length > 1:
+                THRESHOLD = 5
+            else:
+                THRESHOLD = 50
+
             # add total counts for the day to each ngram row
-            resultRDD = ngramTotals.join(ngramCounts.filter(lambda x: x[1][1] > int(1e-7 * totalSum)))\
+            resultRDD = ngramTotals.join(ngramCounts.filter(lambda x: x[1][1] > THRESHOLD and x[1][1] > int(1e-6 * totalSum)))\
                 .map(lambda x: (x[0], x[1][1][0], x[1][1][1], x[1][0]))
             resultRDD.foreachPartition(lambda x: db.saveNgramCounts(ngram_length, x))
 
