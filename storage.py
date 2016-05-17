@@ -31,14 +31,6 @@ class Sqlite():
                 pass
 
 class Mysql(Sqlite):
-    def connect(self):
-        # workers must each connect individually
-        import sys, os, django
-        sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "project"))
-        # sys.path.append(os.path.join("/home/ubuntu/reddit-comments", "project"))
-        os.environ["DJANGO_SETTINGS_MODULE"] = "project.settings"
-        django.setup()
-
     def saveSubredditCounts(self, month, rdd):
         self.connect()
         from reddit.models import Subreddit
@@ -91,60 +83,6 @@ class ElasticSearch():
             response = self.client.put(collection, key, {
               "count": count,
             })
-
-class Cassandra():
-    def __init__(self):
-        self.nodes = ['ec2-52-38-240-73.us-west-2.compute.amazonaws.com',
-                      'ec2-52-10-219-45.us-west-2.compute.amazonaws.com',
-                      'ec2-52-36-44-251.us-west-2.compute.amazonaws.com',
-                      'ec2-52-27-44-212.us-west-2.compute.amazonaws.com']
-        self.keyspace = 'reddit'
-        self.table = 'ngram'
-
-    def set_table(self, table):
-        self.table = table
-
-    def saveNgramCounts(self, ngramcount, rdditer, async=True, debug=False):
-        if debug:
-            for datatuple in rdditer:
-                print datatuple
-            return
-        from cassandra.cluster import Cluster
-        from timeconverter import TimeConverter
-        import time
-        CASSANDRA_WAIT = 5
-        QUERY_WAIT = 0.001
-        CassandraCluster = Cluster(self.nodes)
-
-        success = False
-        #try to reconnect if connection is down
-        while not success:
-            try:
-                session = CassandraCluster.connect(self.keyspace)
-                session.default_timeout = 60
-                success = True
-            except:
-                success = False
-                time.sleep(CASSANDRA_WAIT)
-
-        query = "INSERT INTO %s (phrase, time_bucket, date, absolute_count, percentage) VALUES (?, ?, ?, ?, ?)" % (self.table,)
-        prepared = session.prepare(query)
-
-        timeConverter = TimeConverter()
-        for line in rdditer:
-            date, ngram, count, total = line
-            percentage = float(int(count) / float(total))
-            time_bucket = timeConverter.toTimebucket(date)
-
-            bound = prepared.bind((ngram, timeConverter.toDatetime(time_bucket), timeConverter.toDatetime(date), count, percentage))
-            if async:
-                session.execute_async(bound)
-                time.sleep(QUERY_WAIT)
-            else:
-                session.execute(bound)
-
-        session.shutdown()
-
 
 import unittest, os
 
