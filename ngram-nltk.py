@@ -87,9 +87,9 @@ if __name__ == "__main__":
             db = Cassandra()
 
             if ngram_length > 1:
-                THRESHOLD = 5
+                THRESHOLD = 2
             else:
-                THRESHOLD = 50
+                THRESHOLD = 10
 
             # add total counts for the day to each ngram row
             resultRDD = ngramTotals.join(ngramCounts.filter(lambda x: x[1][1] > THRESHOLD and x[1][1] > int(1e-6 * totalSum)))\
