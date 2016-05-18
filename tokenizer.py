@@ -101,7 +101,6 @@ class SentenceTokenizer():
         ReTagsTilde = re.compile('&tilde;?')
         ReTagsDash = re.compile('&mdash;?')
         ReTagsHtml = re.compile('&\w;')
-        ReNonAlphaSpace = re.compile('([^\s\w]|_)+')
 
         # Split (tokenize) text into words. Count whitespace as
         # words. Keeping this information allows us to distinguish between
@@ -120,7 +119,6 @@ class SentenceTokenizer():
         full_text = ReTagsHtml.sub("HTMLTags", full_text)
 
         full_text = ReImage.sub("IMGsub", full_text)
-        full_text = ReNonAlphaSpace.sub('', full_text)
 
         text_words_sp = self.tokenizer.tokenize(full_text)
 
@@ -144,6 +142,7 @@ class SentenceTokenizer():
                     word_tuples.append( (word, False) )
             i = i +1
 
+        delChars = set('.,?![]:;\/\\()"{}-$%^&*<>~-*')
         # Create list of sentence using the classifier
         sentences = []
         for sent in self.classify_segment_sentences(word_tuples):
@@ -176,7 +175,7 @@ class SentenceTokenizer():
             if len(tok) > 0:
                 sentence.append(tok)
             # The sentence has been procssed =&gt; save it
-            sentences.append(sentence)
+            sentences.append(filter(lambda x: not(x in delChars), sentence))
 
         # return the resulting list of sentences
         return sentences
@@ -201,6 +200,14 @@ class TestTokenizerMethods(unittest.TestCase):
         text = tokenizer.segment_text(text.encode('utf-8'))
         self.assertEqual(['using', 'nltk', 'library', 'python', 'might', 'faced', 'situation', 'need', 'reduce', 'size', 'text', 'improve', 'performance', 'algorithms', 'see', 'url', 'URLsub', 'URLsub']
 , tokenizer.ngrams(text, 1))
+        text = """I signed an open letter earlier this year imploring researchers to balance the benefits of AI with the risks. The letter acknowledges that AI might one day help eradicate disease and poverty, but it also puts the onus on scientists at the forefront of this technology to keep the human factor front and center of their innovations. I'm part of a campaign enabled by Nokia and hope you will join the conversation on http://www.wired.com/maketechhuman. Learn more about my foundation here: http://stephenhawkingfoundation.org/
+Due to the fact that I will be answering questions at my own pace, working with the moderators of /r/Science we are opening this thread up in advance to gather your questions.
+My goal will be to answer as many of the questions you submit as possible over the coming weeks. I appreciate all of your understanding, and taking the time to ask me your questions."""
+        tokenizer = SentenceTokenizer()
+        text = tokenizer.segment_text(text.encode('utf-8'))
+        self.assertEqual(['signed', 'open', 'letter', 'earlier', 'year', 'imploring', 'researchers', 'balance', 'benefits', 'ai', 'risks', 'letter', 'acknowledges', 'ai', 'might', 'one', 'day', 'help', 'eradicate', 'disease', 'poverty', 'also', 'puts', 'onus', 'scientists', 'forefront', 'technology', 'keep', 'human', 'factor', 'front', 'center', 'innovations', 'im', 'part', 'campaign', 'enabled', 'nokia', 'hope', 'join', 'conversation', 'URLsub', 'learn', 'foundation', 'URLsub', 'due', 'fact', 'answering', 'questions', 'pace', 'working', 'moderators', 'science', 'opening', 'thread', 'advance', 'gather', 'questions', 'goal', 'answer', 'many', 'questions', 'submit', 'possible', 'coming', 'weeks', 'appreciate', 'understanding', 'taking', 'time', 'ask', 'questions'], tokenizer.ngrams(text, 1))
+        self.assertEqual(
+['open letter', 'letter earlier', 'year imploring', 'imploring researchers', 'letter acknowledges', 'ai might', 'might one', 'one day', 'day help', 'help eradicate', 'eradicate disease', 'also puts', 'human factor', 'factor front', 'im part', 'campaign enabled', 'URLsub learn', 'URLsub due', 'answering questions', 'coming weeks'], tokenizer.ngrams(text, 2))
 
 if __name__ == "__main__":
     unittest.main()
