@@ -26,6 +26,8 @@ if __name__ == "__main__":
     # calculate the totals summed across all dates
     countDF = df.groupBy('name').agg({"count": "sum"}).withColumnRenamed('sum(count)', 'total')
 
+    # drop columns with null values
+    df = df.na.drop()
     # read from the column months
     months = sorted(df.select("month")
         .distinct()
