@@ -15,6 +15,9 @@ class DomainTimeseries(models.Model):
     series = models.TextField()
     total = models.BigIntegerField(default=0)
 
+    class Meta:
+        ordering = ['-total']
+
 class Subreddit(models.Model):
     month = models.CharField(max_length=30)
     count = models.BigIntegerField() # stores up to 9223372036854775807
@@ -28,6 +31,8 @@ class SubredditTimeseries(models.Model):
     series = models.TextField()
     total = models.BigIntegerField(default=0)
 
+    class Meta:
+        ordering = ['-total']
 
 try:
     from cassandra.cqlengine import columns
