@@ -1,2 +1,3 @@
 nltk
-porc
+airflow
+cassandra-driver
