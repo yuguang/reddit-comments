@@ -31,6 +31,7 @@ urlpatterns = [
     url(r'^subreddits/', views.subreddit_detail, name='subreddit_detail'),
     url(r'^ngrams/', views.ngram, name='ngram_viewer'),
     url(r'^$', views.home, name='index'),
+    url(r'^top/$', views.top, name='top'),
     # url(r'^', include(router.urls)),
     # url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

@@ -22,7 +22,9 @@
   <iframe width="900" height="800" frameborder="0" scrolling="no" src="https://plot.ly/~yuguang/12.embed"></iframe>
   </div>
   {% endif %}
-  <div id="container-bubble" style="min-width: 310px; margin-left: 20px"></div>
+  <div class="row">
+    <div id="container-bubble" style="min-width: 310px; margin-left: 20px"></div>
+  </div>
 {% endblock %}
 
 {% block script %}
@@ -6093,69 +6095,6 @@
         }]
       });
 
-    $('#container-bubble').highcharts({
-
-        chart: {
-            type: 'bubble',
-            plotBorderWidth: 1,
-            zoomType: 'xy'
-        },
-
-        legend: {
-            enabled: false
-        },
-
-        title: {
-            text: ''
-        },
-
-        xAxis: {
-            gridLineWidth: 1,
-            title: {
-                text: 'Gilded Comments to Total Comments Ratio'
-            },
-            labels: {
-                format: '{value} %'
-            }
-        },
-
-        yAxis: {
-            startOnTick: false,
-            endOnTick: false,
-            title: {
-                text: 'Average Score'
-            },
-            labels: {
-                format: '{value}'
-            },
-            maxPadding: 0.2
-        },
-
-        tooltip: {
-            useHTML: true,
-            headerFormat: '<table>',
-            pointFormat: '<tr><th colspan="2"><h3>{point.country}</h3></th></tr>' +
-                '<tr><th>Gilded ratio:</th><td>{point.x:.8f}%</td></tr>' +
-                '<tr><th>Avg. score:</th><td>{point.y:.2f}</td></tr>' +
-                '<tr><th>Comments:</th><td>{point.z:,.0f}</td></tr>',
-            footerFormat: '</table>',
-            followPointer: true
-        },
-
-        plotOptions: {
-            series: {
-                dataLabels: {
-                    enabled: true,
-                    format: '{point.name}'
-                }
-            }
-        },
-
-        series: [{
-            data: {% include 'bubble.json' %}
-        }]
-
-    });
     });
   </script>
 {% endblock %}

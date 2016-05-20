@@ -61,3 +61,6 @@ def ngram(request):
 
 def home(request):
     return render(request, 'home.html')
+
+def top(request):
+    return render(request, 'best.html')
