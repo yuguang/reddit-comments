@@ -10,11 +10,17 @@ from settings import default_args
 
 dag = DAG('reddit_comments', default_args=default_args, schedule_interval=timedelta(2))
 
-# t1, t2 and t3 are examples of tasks created by instantiating operators
+
+pre = BashOperator(
+    task_id='ngrams_batch',
+    bash_command='tasks/setup_dirs.sh',
+    depends_on_past=False,
+    dag=dag)
+
 t1 = BashOperator(
     task_id='ngrams_batch',
     bash_command='tasks/run_ngrams_batch.sh',
-    depends_on_past=True,
+    depends_on_past=False,
     dag=dag)
 
 t2 = BashOperator(
@@ -23,4 +29,5 @@ t2 = BashOperator(
     bash_command='tasks/optimize_ngrams.sh',
     dag=dag)
 
+t1.set_upstream(pre)
 t2.set_upstream(t1)
