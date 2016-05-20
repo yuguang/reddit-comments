@@ -1,0 +1,3 @@
+[submodule "redshift/reddit-plots"]
+	path = redshift/reddit-plots
+	url = https://github.com/yuguang/reddit-plots
