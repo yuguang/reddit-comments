@@ -12,7 +12,7 @@ dag = DAG('reddit_comments', default_args=default_args, schedule_interval=timede
 
 
 pre = BashOperator(
-    task_id='ngrams_batch',
+    task_id='setup',
     bash_command='tasks/setup_dirs.sh',
     depends_on_past=False,
     dag=dag)
