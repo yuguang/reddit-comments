@@ -64,3 +64,9 @@ def home(request):
 
 def top(request):
     return render(request, 'best.html')
+
+def peak_hours(request):
+    return render(request, 'hour.html')
+
+def peak_weekdays(request):
+    return render(request, 'weekday.html')

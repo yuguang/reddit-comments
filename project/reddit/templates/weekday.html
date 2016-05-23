@@ -1,0 +1,14 @@
+{% extends "peak.html" %}
+
+{% block content %}
+  {% with 'day of week' as name %}
+  {{block.super}}
+  {% endwith %}
+{% endblock content %}
+
+{% block script %}
+  <script>
+  var file = 'weekday.tsv';
+  </script>
+  {{block.super}}
+{% endblock script %}

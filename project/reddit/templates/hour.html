@@ -1,0 +1,14 @@
+{% extends "peak.html" %}
+
+{% block content %}
+  {% with 'hour' as name %}
+  {{block.super}}
+  {% endwith %}
+{% endblock content %}
+
+{% block script %}
+  <script>
+  var file = 'hour.tsv';
+  </script>
+  {{block.super}}
+{% endblock script %}

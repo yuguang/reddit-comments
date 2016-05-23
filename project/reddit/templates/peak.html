@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block style %}
+  <style type="text/css">
+  #container {
+    font: 11px sans-serif;
+    margin: 10px;
+  }
+
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+
+  .bar:hover {
+    fill: #bcbcbc ;
+  }
+
+  .x.axis path {
+    display: none;
+  }
+
+  .d3-tip {
+    line-height: 1;
+    font-weight: bold;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #efefef;
+    border-radius: 2px;
+  }
+
+  /* Creates a small triangle extender for the tooltip */
+  .d3-tip:after {
+    box-sizing: border-box;
+    display: inline;
+    font-size: 10px;
+    width: 100%;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.8);
+    content: "\25BC";
+    position: absolute;
+    text-align: center;
+  }
+
+  /* Style northward tooltips differently */
+  .d3-tip.n:after {
+    margin: -1px 0 0 0;
+    top: 100%;
+    left: 0;
+  }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="page-header">
+      <h3>Peak {{ name }} to post by subreddit <small>2007 - 2015 posts with more than 1k points</small></h3>
+    </div>
+  </div>
+  <div class="row">
+    <div id="container">
+      <div id="vis"></div>
+    </div>
+  </div>
+{% endblock %}
+{% block script %}
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.min.js"></script>
+  <script type="text/javascript">
+
+var margin = {top: 45, right: 100, bottom: 20, left: 20},
+    width = 450 - margin.left - margin.right,
+    height = 90 - margin.top - margin.bottom;
+
+var formatPercent = d3.format(".0%");
+
+var color = d3.scale.linear()
+          .range(["#ca0020","#f4a582","#f7f7f7","#92c5de","#0571b0"])
+          .domain([0,0.2,0.4,0.6,0.8]);
+
+var x = d3.scale.ordinal()
+    .rangeRoundBands([0, width], .1);
+
+// Scales. Note the inverted domain fo y-scale: bigger is up!
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .tickFormat(formatPercent);
+
+var tip = d3.tip()
+  .attr('class', 'd3-tip')
+  .offset([-10, 0])
+  .html(function(d) {
+    return "<strong>" + d.country + "\t" + d.year + ":00 to " + (parseInt(d.year)+1) + ":00 CST</strong></span>";
+  })
+
+// csv loaded asynchronously
+d3.tsv("{% static "" %}" + file, type, function(data) {
+
+  // Data is nested by country
+  var countries = d3.nest()
+      .key(function(d) { return d.country; })
+      .entries(data);
+
+  // Parse dates and numbers. We assume values are sorted by date.
+  // Also compute the maximum price per symbol, needed for the y-domain.
+  // symbols.forEach(function(s) {
+  //   s.values.forEach(function(d) { d.date = parse(d.date); d.price = +d.price; });
+  //   s.maxPrice = d3.max(s.values, function(d) { return d.price; });
+  // });
+
+  // Compute the minimum and maximum year and percent across symbols.
+  x.domain(data.map(function(d) { return d.year; }));
+  y.domain([0, d3.max(countries, function(s) { return s.values[0].percent; })]);
+
+  // Add an SVG element for each country, with the desired dimensions and margin.
+  var svg = d3.select("#vis").selectAll("svg")
+    .data(countries)
+    .enter()
+    .append("svg:svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      // Hide y axis
+      // .attr("class", "y axis")
+      // .call(yAxis)
+    .append("text")
+    .attr("x", width + 10)
+    .attr("y", height/3)
+    .attr("dy", ".71em")
+    .attr("text-anchor", "start")
+    .attr("font-size", "1.1em")
+    .text(function(d) { return d.key});
+
+  // Accessing nested data: https://groups.google.com/forum/#!topic/d3-js/kummm9mS4EA
+  // data(function(d) {return d.values;})
+  // this will dereference the values for nested data for each group
+  svg.selectAll(".bar")
+      .data(function(d) {return d.values;})
+      .enter()
+      .append("rect")
+      .attr("class", "bar")
+      .attr("x", function(d) { return x(d.year); })
+      .attr("width", x.rangeBand())
+      .attr("y", function(d) { return y(d.percent); })
+      .attr("height", function(d) { return height - y(d.percent); })
+      .attr("fill", function(d) {return color(d.percent*5)})
+      .on('mouseover', tip.show)
+      .on('mouseout', tip.hide)
+
+  svg.call(tip);
+
+});
+
+function type(d) {
+  d.percent = +d.percent;
+  return d;
+}
+
+</script>
+{% endblock %}

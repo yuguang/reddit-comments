@@ -32,6 +32,8 @@ urlpatterns = [
     url(r'^ngrams/', views.ngram, name='ngram_viewer'),
     url(r'^$', views.home, name='index'),
     url(r'^top/$', views.top, name='top'),
+    url(r'^peak/hours/$', views.peak_hours, name='peak_hours'),
+    url(r'^peak/weekdays/$', views.peak_weekdays, name='peak_weekdays'),
     # url(r'^', include(router.urls)),
     # url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
