@@ -1,4 +1,25 @@
 {% extends "base.html" %}
+{% load staticfiles %}
+
+{% block style %}
+  <style>
+    #container {
+      margin-bottom: 5em;
+      padding-bottom: 5em;
+    }
+    .center {
+      margin-top: 5em;
+      position: absolute;
+      top: 50%;
+      left:50%;
+      transform: translate(-50%,-50%);
+    }
+    .graph {
+      padding-top: 5em;
+      height: 400px;
+    }
+  </style>
+{% endblock %}
 
 {% block content %}
   <div class="row">
@@ -12,7 +33,19 @@
     </div><!-- /.col-lg-6 -->
   </div><!-- /.row -->
   <div class="row">
-    <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+    <div id="container" style="min-width: 310px; margin: 0 auto"></div>
+  </div>
+  <div class="row">
+  <div class="page-header">
+  <h3>Overview of {{ name }}s <small> 2007 - 2015</small></h3>
+</div>
+    {% with svg_static='image/'|add:name|add:'.svg' png_static='image/'|add:name|add:'.small.png' %}
+    <div class=text-center">
+      <a id="cover" title="click for scrollable full size chart" href="{% static svg_static %}" target="_blank">
+        <img src="{% static png_static %}" alt="" class="img-responsive center-block img-rounded">
+      </a>
+    </div>
+    {% endwith %}
   </div>
 {% endblock %}
 
@@ -79,7 +112,7 @@
                   return [Date.UTC(date[0], date[1]), parseInt(point)];
                 })
                 .value();
-              console.log(_.filter(list, function(item) {return _.isNumber(item[1])}));
+{#              console.log(_.filter(list, function(item) {return _.isNumber(item[1])}));#}
 
               return {
                 type: 'area',
@@ -88,7 +121,7 @@
               }
             })
             .value();
-
+          $('#container').addClass('graph');
           $('#container').highcharts({
             chart: {
               zoomType: 'x'
