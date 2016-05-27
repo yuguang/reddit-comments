@@ -20,12 +20,13 @@ with open(args.file, 'rb') as file:
         if len(line) != 6:
             continue
         date, name, count, total, length, percentage = line
-        print("Adding ngram:", date, name)
+        percentage_trunc = '%.7f' % float(percentage)
+        print("Adding ngram:", date, name, percentage_trunc)
 
         table.put_item(
            Item={
                'Date': date,
                'Phrase': name,
-               'Percentage': percentage,
+               'Percentage': percentage_trunc,
             }
         )
