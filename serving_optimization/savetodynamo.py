@@ -10,7 +10,7 @@ parser.add_argument("file", help="A CSV file without header, one datum per line"
 args = parser.parse_args()
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1', endpoint_url="https://dynamodb.us-east-1.amazonaws.com")
 
-table = dynamodb.Table('Ngram')
+table = dynamodb.Table('ngrams')
 
 with open(args.file, 'rb') as file:
     reader = csv.reader(file)
@@ -20,13 +20,14 @@ with open(args.file, 'rb') as file:
         if len(line) != 6:
             continue
         date, name, count, total, length, percentage = line
-        percentage_trunc = '%.7f' % float(percentage)
+        date = date.replace('-', '')
+        percentage_trunc = str(int(round(float(percentage)*pow(10, 8))))
         print("Adding ngram:", date, name, percentage_trunc)
 
         table.put_item(
            Item={
-               'Date': date,
-               'Phrase': name,
-               'Percentage': percentage_trunc,
+               'date': date,
+               'phrase': name,
+               'percentage': percentage_trunc,
             }
         )
