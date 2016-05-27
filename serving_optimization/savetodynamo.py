@@ -20,8 +20,10 @@ with open(args.file, 'rb') as file:
         if len(line) != 6:
             continue
         date, name, count, total, length, percentage = line
-        date = date.replace('-', '')
-        percentage_trunc = str(int(round(float(percentage)*pow(10, 8))))
+        # remove the century part of the year and dashes
+        date = date.replace('-', '')[2:]
+        # truncate to significant digits
+        percentage_trunc = int(round(float(percentage)*pow(10, 8)))
         print("Adding ngram:", date, name, percentage_trunc)
 
         table.put_item(
