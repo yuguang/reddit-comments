@@ -12,24 +12,36 @@ dynamodb = boto3.resource('dynamodb', region_name='us-east-1', endpoint_url="htt
 
 table = dynamodb.Table('ngrams')
 
+START = 1154700
+line_no = 0
 with open(args.file, 'rb') as file:
     reader = csv.reader(file)
     for line in reader:
+        line_no += 1
+        if line_no < START:
+            continue
         if not ''.join(line).strip():
             continue
         if len(line) != 6:
             continue
-        date, name, count, total, length, percentage = line
-        # remove the century part of the year and dashes
-        date = date.replace('-', '')[2:]
-        # truncate to significant digits
-        percentage_trunc = int(round(float(percentage)*pow(10, 8)))
-        print("Adding ngram:", date, name, percentage_trunc)
+        for part in line:
+            if len(part) == 0:
+                continue
+        try:
+            date, name, count, total, length, percentage = line
+            # remove the century part of the year and dashes
+            date = date.replace('-', '')[2:]
+            # truncate to significant digits
+            percentage_trunc = int(round(float(percentage)*pow(10, 8)))
+            print("Adding ngram:", date, name, percentage_trunc)
 
-        table.put_item(
-           Item={
-               'date': date,
-               'phrase': name,
-               'percentage': percentage_trunc,
-            }
-        )
+            table.put_item(
+               Item={
+                   'date': date,
+                   'phrase': name,
+                   'percentage': percentage_trunc,
+                }
+            )
+        except Exception,e:
+            print(line)
+            print(str(e))
