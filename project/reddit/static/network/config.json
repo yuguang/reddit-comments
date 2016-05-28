@@ -1,0 +1,53 @@
+{
+  "type": "network",
+  "version": "1.0",
+  "data": "data.json",
+  "logo": {
+    "file": "",
+    "link": "",
+    "text": "Yuguang Zhang"
+  },
+  "text": {
+    "more": "A visualization of the Reddit social network. See <a href='http://redditor.club'>redditor.club</a> for more Reddit data visualizations. ",
+    "intro": "This is a map of subreddits based on Reddit comments. Subreddits are linked if many users posted or commented in both of the subreddits. ",
+    "title": "Subreddit Network"
+  },
+  "legend": {
+    "edgeLabel": "Link",
+    "colorLabel": "Cluster",
+    "nodeLabel": "Subreddit"
+  },
+  "features": {
+    "search": true,
+    "groupSelectorAttribute": false,
+    "hoverBehavior": "default"
+  },
+  "informationPanel": {
+    "groupByEdgeDirection": false,
+    "imageAttribute": false
+  },
+  "sigma": {
+    "drawingProperties": {
+      "defaultEdgeType": "curve",
+      "defaultHoverLabelBGColor": "#002147",
+      "defaultLabelBGColor": "#ddd",
+      "activeFontStyle": "bold",
+      "defaultLabelColor": "#fff",
+      "labelThreshold": 10,
+      "defaultLabelHoverColor": "#fff",
+      "fontStyle": "bold",
+      "hoverFontStyle": "bold",
+      "defaultLabelSize": 14
+    },
+    "graphProperties": {
+      "maxEdgeSize": 0.5,
+      "minEdgeSize": 0.2,
+      "minNodeSize": 0.2,
+      "maxNodeSize": 1.5
+    },
+    "mouseProperties": {
+      "maxRatio": 20,
+      "minRatio": 0.75
+    }
+  }
+}
