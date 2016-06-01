@@ -1,3 +1,7 @@
 nltk
 airflow
 cassandra-driver
+stemming
+wordcloud
+pillow
+matplotlib
