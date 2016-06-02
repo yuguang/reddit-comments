@@ -62,7 +62,8 @@ if __name__ == "__main__":
 
     for row in df.select('subreddit').distinct():
         rows = df.filter(df['subreddit'] == row['subreddit']).orderBy(desc('score'))
-        if rows.count() > 50:
+        count = rows.count()
+        if count > 50:
             # map to term frequency tuples
-            frequencies = rows.select(['term', 'score']).take(max(rows.count(), 500)).map(lambda x: (x['term'], x['score'])).collect()
+            frequencies = rows.select(['term', 'score']).take(max(count, 500)).map(lambda x: (x['term'], x['score'])).collect()
             saveWordCloud(row['subreddit'], frequencies)
