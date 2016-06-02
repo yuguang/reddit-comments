@@ -11,6 +11,8 @@ from utils import saveWordCloud
 if __name__ == "__main__":
     conf = SparkConf().setAppName("reddit")
     conf.set('spark.serializer', 'org.apache.spark.serializer.KryoSerializer')
+    conf.set('spark.local.dir', '/mnt/work')
+    conf.set('spark.driver.maxResultSize', '12g')
     sc = SparkContext(conf=conf)
     sqlContext = SQLContext(sc)
     data_rdd = sc.textFile("s3n://reddit-comments/2015/*")
@@ -62,5 +64,5 @@ if __name__ == "__main__":
         rows = df.filter(df['subreddit'] == row['subreddit']).orderBy(desc('score'))
         if rows.count() > 50:
             # map to term frequency tuples
-            frequencies = rows.select(['term', 'score']).map(lambda x: (x['term'], x['score'])).collect()
+            frequencies = rows.select(['term', 'score']).take(max(rows.count(), 500)).map(lambda x: (x['term'], x['score'])).collect()
             saveWordCloud(row['subreddit'], frequencies)
