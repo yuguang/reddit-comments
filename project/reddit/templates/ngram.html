@@ -33,40 +33,47 @@
     function displayGraph(terms) {
       $.getJSON('', {'terms': terms}, function (data) {
         var series = _.chain(data)
-            .map(function (list, domain) {
-              list = _.map(list, function(item) {
-                return [toDate(item.date), parseInt(item.percentage)/Math.pow(10, 8)];
-              });
+          .map(function (list, domain) {
+            list = _.map(list, function (item) {
+              return [toDate(item.date), parseInt(item.percentage) / Math.pow(10, 8)];
+            });
 
-              return {
-                type: 'spline',
-                name: domain,
-                data: list
-              }
-            })
-            .value();
+            return {
+              type: 'spline',
+              name: domain,
+              data: list
+            }
+          })
+          .value();
         window.chart = new Highcharts.StockChart({
-            chart: {
-                renderTo: 'container'
-            },
+          chart: {
+            renderTo: 'container'
+          },
+          yAxis: {
+            labels: {
+              format: '{value} %'
+            }
+          },
 
-            rangeSelector: {
-                selected: 1,
-                inputDateFormat: '%Y-%m-%d'
-            },
+          rangeSelector: {
+            selected: 1,
+            inputDateFormat: '%Y-%m-%d'
+          },
+          tooltip: {
+            valueSuffix: '%'
+          },
+          title: {
+            text: ''
+          },
 
-            title: {
-                text: ''
-            },
+          series: series
 
-            series: series
+        }, function (chart) {
 
-        }, function(chart) {
-
-            // apply the date pickers
-            setTimeout(function() {
-                $('input.highcharts-range-selector', $('#' + chart.options.chart.renderTo)).datepicker()
-            }, 0)
+          // apply the date pickers
+          setTimeout(function () {
+            $('input.highcharts-range-selector', $('#' + chart.options.chart.renderTo)).datepicker()
+          }, 0)
         });
       });
     }
