@@ -33,16 +33,3 @@ class SubredditTimeseries(models.Model):
 
     class Meta:
         ordering = ['-total']
-
-try:
-    from cassandra.cqlengine import columns
-    from cassandra.cqlengine.models import Model
-except ImportError:
-    pass
-else:
-    class Ngram(Model):
-        phrase = columns.Text(primary_key=True)
-        time_bucket = columns.DateTime(primary_key=True)
-        date = columns.DateTime()
-        absolute_count = columns.Integer()
-        percentage = columns.Float()

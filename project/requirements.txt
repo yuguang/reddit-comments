@@ -2,3 +2,4 @@ django == 1.9.6
 djangorestframework
 MySQL-python
 django_cassandra_engine
+boto3

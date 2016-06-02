@@ -2,19 +2,81 @@
 
 {% block content %}
   <div class="row">
-    <div class="col-lg-6">
+    <div class="col-lg-6 col-lg-offset-3">
       <div class="input-group">
-      <input type="text" class="form-control" id="search-box"  placeholder="Enter terms"/>
+      <input type="text" class="form-control" id="search-box" {% if debug %}value="new"{% endif %} placeholder="Enter terms"/>
           <span class="input-group-btn">
-            <button class="btn btn-default" type="button">Search</button>
+            <button id="search-btn" class="btn btn-default" type="button">Search</button>
           </span>
       </div>
     </div><!-- /.col-lg-6 -->
   </div><!-- /.row -->
+  <div class="row">
+    <div id="container" style="min-width: 310px; margin: 0 auto"></div>
+  </div>
 {% endblock %}
 
 {% block script %}
+  <script src="https://code.highcharts.com/stock/highstock.js"></script>
   <script>
     $('#search-box').tokenfield({createTokensOnBlur: true});
+    $('#search-btn').click(function () {
+      var terms = $('#search-box').val();
+      displayGraph(terms);
+    });
+    function toDate(date_compressed) {
+      var y = '20' + date_compressed.slice(0,2);
+      var m = date_compressed.slice(2,4);
+      var d = date_compressed.slice(4,6);
+      return Date.UTC(parseInt(y), parseInt(m), parseInt(d))
+    }
+    function displayGraph(terms) {
+      $.getJSON('', {'terms': terms}, function (data) {
+        var series = _.chain(data)
+            .map(function (list, domain) {
+              list = _.map(list, function(item) {
+                return [toDate(item.date), parseInt(item.percentage)/Math.pow(10, 8)];
+              });
+
+              return {
+                type: 'spline',
+                name: domain,
+                data: list
+              }
+            })
+            .value();
+        window.chart = new Highcharts.StockChart({
+            chart: {
+                renderTo: 'container'
+            },
+
+            rangeSelector: {
+                selected: 1,
+                inputDateFormat: '%Y-%m-%d'
+            },
+
+            title: {
+                text: ''
+            },
+
+            series: series
+
+        }, function(chart) {
+
+            // apply the date pickers
+            setTimeout(function() {
+                $('input.highcharts-range-selector', $('#' + chart.options.chart.renderTo)).datepicker()
+            }, 0)
+        });
+      });
+    }
+    // Set the datepicker's date format
+    $.datepicker.setDefaults({
+      dateFormat: 'yy-mm-dd',
+      onSelect: function (dateText) {
+        this.onchange();
+        this.onblur();
+      }
+    });
   </script>
 {% endblock %}

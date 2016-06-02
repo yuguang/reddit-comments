@@ -5,6 +5,8 @@ from serializers import *
 from rest_framework.decorators import api_view
 from jsonresponse import JSONResponse
 import os, base64
+import boto3
+from boto3.dynamodb.conditions import Key, Attr
 
 class DomainViewSet(viewsets.ModelViewSet):
     queryset = Domain.objects.all().order_by('-month')
@@ -53,10 +55,28 @@ def subreddit_detail(request):
     serializer = SearchModelSerializer(SubredditTimeseries,  SubredditSerializer)
     return serializer.detail(request)
 
+def get_ngram_series(term):
+    dynamodb = boto3.resource('dynamodb', region_name='us-east-1', endpoint_url="https://dynamodb.us-east-1.amazonaws.com")
+
+    table = dynamodb.Table('ngrams')
+
+    response = table.query(
+        KeyConditionExpression=Key('phrase').eq(term)
+    )
+    return response['Items']
+
+
 @api_view(['GET'])
 def ngram(request):
     if request.is_ajax():
         terms = request.GET['terms'].split(',')
+        terms = map(lambda s: s.strip(), terms)
+        response_dict = {}
+        for term in terms:
+            timeline = get_ngram_series(term)
+            if timeline:
+                response_dict[term] = timeline
+        return JSONResponse(response_dict)
     return render(request, 'ngram.html')
 
 def home(request):

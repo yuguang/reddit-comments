@@ -41,14 +41,6 @@ INSTALLED_APPS = [
     'rest_framework',
 ]
 
-try:
-    from cassandra.cqlengine import columns
-    from cassandra.cqlengine.models import Model
-except ImportError:
-    pass
-else:
-    INSTALLED_APPS.append('django_cassandra_engine')
-
 MIDDLEWARE_CLASSES = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
