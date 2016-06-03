@@ -7,12 +7,14 @@ import argparse, csv
 
 parser = argparse.ArgumentParser()
 parser.add_argument("file", help="A CSV file without header, one datum per line")
+parser.add_argument("multiple", help="Start partition number within file")
 args = parser.parse_args()
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1', endpoint_url="https://dynamodb.us-east-1.amazonaws.com")
 
 table = dynamodb.Table('ngrams')
 
-START = 1154700
+START = 14899123 * int(args.multiple)
+STOP = START * (int(args.multiple) + 1)
 line_no = 0
 with open(args.file, 'rb') as file:
     reader = csv.reader(file)
@@ -20,6 +22,8 @@ with open(args.file, 'rb') as file:
         line_no += 1
         if line_no < START:
             continue
+        if line_no > STOP:
+            break
         if not ''.join(line).strip():
             continue
         if len(line) != 6:
