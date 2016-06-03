@@ -164,6 +164,14 @@ class TestDatabases(unittest.TestCase):
         d = Domain(month='2007-01', count=1, name='none')
         d.using('production').save()
         d.delete()
+    def test_save_words(self):
+        mock_df = [{'subreddit': 'science', 'count': 0.0003054940802236146, 'term': 'psh'},
+ {'subreddit': 'reddit.com', 'count': 0.0012383955077970386, 'term': 'specif'},
+ {'subreddit': 'programming', 'count': 0.0007878363600804216, 'term': '37'},]
+        db = Sqlite()
+        db.saveSubredditWords(mock_df)
+        from reddit.models import Term
+        Term.objects.all().delete()
 
 class TestElastic(unittest.TestCase):
     def test_save(self):

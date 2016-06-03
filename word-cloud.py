@@ -8,7 +8,7 @@ from utils import saveWordCloud
 from storage import Sqlite
 
 PARTITIONS = 500
-THRESHOLD = 1000
+THRESHOLD = 50
 
 if __name__ == "__main__":
     conf = SparkConf().setAppName("reddit")
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     sqlContext = SQLContext(sc)
     fields = [StructField("subreddit", StringType(), True),
           StructField("body", StringType(), True)]
-    rawDF = sqlContext.read.json("file:///mnt/s3/2015/RC_2015-01", StructType(fields))
+    rawDF = sqlContext.read.json("file:///mnt/s3/2015/*", StructType(fields))
     # split comments into words
     tokenizer = Tokenizer(inputCol="body", outputCol="words")
     wordsDataFrame = tokenizer.transform(rawDF)
@@ -31,9 +31,5 @@ if __name__ == "__main__":
     # group by subreddit and term, then count occurence of term in subreddits
     countsDataFrame = termDataFrame.groupBy(['subreddit', 'term']).count()
 
-    # get the subreddits that have more than 1000 terms
-    subreddits = set(termDataFrame.groupBy('subreddit').count().filter(lambda x: x['count'] > THRESHOLD)\
-        .flatmap(lambda x: x['subreddit']).collect())
-
     db =  Sqlite()
-    countsDataFrame.select(['subreddit', 'term', 'count']).filter(lambda x: x['subreddit'] in subreddits).foreachPartiton(db.saveSubredditWords)
+    countsDataFrame.select(['subreddit', 'term', 'count']).filter('count > {}'.format(THRESHOLD)).foreachPartition(db.saveSubredditWords)
