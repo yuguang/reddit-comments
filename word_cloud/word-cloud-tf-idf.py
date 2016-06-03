@@ -6,7 +6,7 @@ import numpy as np
 from pyspark.sql import SQLContext
 from pyspark.sql.functions import desc
 from pyspark.sql.types import *
-from utils import saveWordCloud
+from imaging import saveWordCloud
 
 PARTITIONS = 500
 

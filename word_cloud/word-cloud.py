@@ -4,7 +4,6 @@ from pyspark.ml.feature import Tokenizer
 from pyspark.sql import SQLContext
 from pyspark.sql.functions import desc, explode
 from pyspark.sql.types import *
-from utils import saveWordCloud
 from storage import Sqlite
 
 PARTITIONS = 500
