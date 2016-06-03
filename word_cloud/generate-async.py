@@ -1,3 +1,9 @@
+from multiprocessing import Pool
+from django.db.models import Q
+import time
+import argparse, os, sys
+sys.path.append(os.path.abspath(os.path.join('.', os.pardir)))
+from storage import Sqlite
 from os import path
 from PIL import Image
 import numpy as np
@@ -8,7 +14,7 @@ from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 
 DOWNLOADED = 'masked'
 RANDOM = 'random'
-def save_word_cloud(subreddit, frequencies, id='a'):
+def save_word_cloud(subreddit, frequencies, id):
     WIDTH = 1200
     HEIGHT = 800
     COLORS = 80
@@ -58,3 +64,41 @@ def save_word_cloud(subreddit, frequencies, id='a'):
     # save wordcloud for subreddit
     fig.savefig('{}.png'.format(subreddit), transparent=True, dpi=300)
     return "generated {} image for {}".format(type, subreddit)
+
+def unique(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("processes", help="Number of processes (best set to number of CPU cores)")
+    args = parser.parse_args()
+
+    # start worker processes
+    pool = Pool(processes=int(args.processes))
+    db = Sqlite()
+    db.connect()
+    from reddit.models import Term
+    multiple_results = []
+    subreddits = unique(Term.objects.values_list('subreddit', flat=True).all())
+    i = 0
+    for subreddit in subreddits:
+        try:
+            terms = Term.objects.filter(subreddit=subreddit).exclude(Q(name='[deleted]')|Q(name='&gt;')|Q(name=''))
+            if terms.count() < 50:
+                continue
+            frequencies = [(term.name, int(term.count)) for term in terms]
+            print "=========================================="
+            print "making word cloud for ", subreddit
+            print "=========================================="
+            result = pool.apply_async(save_word_cloud, (subreddit, frequencies, str(i))) # make word cloud asynchronously
+            i += 1
+            multiple_results.append(result)
+        except Exception,e:
+            print str(e)
+    for res in multiple_results:
+        try:
+            print res.get()
+        except Exception,e:
+            print str(e)

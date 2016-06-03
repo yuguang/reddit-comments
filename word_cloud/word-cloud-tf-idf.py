@@ -6,7 +6,7 @@ import numpy as np
 from pyspark.sql import SQLContext
 from pyspark.sql.functions import desc
 from pyspark.sql.types import *
-from imaging import saveWordCloud
+from imaging import save_word_cloud
 
 PARTITIONS = 500
 
@@ -69,6 +69,6 @@ if __name__ == "__main__":
         if count > 50:
             # map to term frequency tuples
             frequencies = rows.select(['term', 'score']).take(max(count, 500)).map(lambda x: (x['term'], x['score'])).collect()
-            saveWordCloud(row['subreddit'], frequencies)
+            save_word_cloud(row['subreddit'], frequencies)
 
     df.select('subreddit').distinct().foreach(lambda row: makeWordCloud(row, df))
