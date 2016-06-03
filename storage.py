@@ -30,6 +30,12 @@ class Sqlite():
             except IntegrityError:
                 pass
 
+    def saveSubredditWords(self, df):
+        self.connect()
+        from reddit.models import Term
+        for line in df:
+            Term.objects.update_or_create(subreddit=line['subreddit'], count=line['count'], name=line['term'])
+
 class Mysql(Sqlite):
     def connect(self):
         # workers must each connect individually

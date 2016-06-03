@@ -31,6 +31,8 @@ def findUrlDomain(s):
 def saveWordCloud(subreddit, frequencies):
     WIDTH = 800
     HEIGHT = 600
+    if len(frequencies) < 100:
+        return
     url = "https://www.reddit.com/r/{}/top/.json?limit=5&t=all".format(subreddit)
     opener = urllib2.build_opener()
     opener.addheaders = [('User-agent', 'my_unique_downloader')]

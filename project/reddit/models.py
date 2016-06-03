@@ -33,3 +33,12 @@ class SubredditTimeseries(models.Model):
 
     class Meta:
         ordering = ['-total']
+
+class Term(models.Model):
+    name = models.CharField(max_length=200)
+    subreddit = models.CharField(max_length=200)
+    count = models.BigIntegerField(default=0)
+
+    class Meta:
+        unique_together = (('subreddit', 'name'),)
+        ordering = ['-count']
