@@ -1,4 +1,3 @@
-from os import path
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,32 +7,41 @@ from redditdownload.redditdownload import download_images
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 import subprocess, os, glob, string, shutil
 
-def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
-    WIDTH = 800
-    HEIGHT = 600
-    COLORS = 255 * 2
-    MIN_SCORE = str(300)
-    NUM_PHOTOS = str(15)
-    BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+WIDTH = 800
+HEIGHT = 600
+DPI = 300
+COLORS = int(255*255/2)
+MIN_SCORE = str(100)
+NUM_PHOTOS = str(250)
+FONT_SIZE_MAX = 92
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
+def num_colors(color_counts):
+    # color_counts: a list of (count, color) tuples or None
+    if not color_counts:
+        return 0
+    return len(filter(lambda t: t[0] > 0, color_counts))
+
+def ext_files(subreddit, ext):
+    return glob.glob(os.path.join(BASE_DIR, subreddit) + '/*.' + ext)
+
+def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
     try:
         # download images for subreddit
         download_images(['--score', MIN_SCORE, '--num', NUM_PHOTOS, '--sort-type', 'topall', subreddit, subreddit])
         # get a list of downloaded file names
         coloring = []
-        def ext_files(subreddit, ext):
-            return glob.glob(os.path.join(BASE_DIR, subreddit) + '/*.' + ext)
         for file in ext_files(subreddit, 'jpg') + ext_files(subreddit, 'png') + ext_files(subreddit, 'gif'):
             base_file = os.path.basename(file)
             # get the number of colors in the image and compare
             image = Image.open(os.path.join(BASE_DIR, subreddit, base_file))
-            if len(image.histogram()) > COLORS:
+            if num_colors(image.getcolors()) > COLORS:
                 coloring = np.array(image)
                 break
         shutil.rmtree(subreddit)
         if not len(coloring):
             raise Exception
-        wc = WordCloud(background_color="white", width=WIDTH, height=HEIGHT, max_words=500, mask=coloring, max_font_size=40, stopwords=stopwords)
+        wc = WordCloud(font_path=os.path.join(BASE_DIR, 'fonts', 'Viga-Regular.otf'), background_color="white", width=WIDTH, height=HEIGHT, max_words=500, mask=coloring, max_font_size=FONT_SIZE_MAX, stopwords=stopwords)
         # generate word cloud
         print frequencies[:10]
         wc.generate_from_frequencies(frequencies)
@@ -48,13 +56,13 @@ def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
     except Exception,e:
         print str(e)
         # take relative word frequencies into account, lower max_font_size
-        wordcloud = WordCloud(background_color="white", width=WIDTH, height=HEIGHT, max_words=500, max_font_size=40, stopwords=stopwords)
+        wordcloud = WordCloud(font_path=os.path.join(BASE_DIR, 'fonts', 'PassionOne-Regular.otf'), background_color="white", width=WIDTH, height=HEIGHT, max_words=500, max_font_size=FONT_SIZE_MAX, stopwords=stopwords)
         wordcloud.generate_from_frequencies(frequencies)
         plt.imshow(wordcloud)
         plt.axis("off")
     fig = plt.gcf()
     # save wordcloud for subreddit
-    fig.savefig('{}.png'.format(subreddit), transparent=True, dpi=300)
+    fig.savefig('{}.png'.format(subreddit), transparent=True, dpi=DPI)
     return "generated image for {}".format(subreddit)
 
 
@@ -67,6 +75,19 @@ class TestDownload(unittest.TestCase):
     def test_gif(self):
         save_word_cloud('gifs', [('a',1),('b',2)])
         self.assertTrue(os.path.exists('gifs.png'))
+
+class TestColors(unittest.TestCase):
+    def test_sub(self):
+        subreddit = 'cats'
+        download_images(['--num', '1', '--sort-type', 'topall', subreddit, subreddit])
+        # get a list of downloaded file names
+        for file in ext_files(subreddit, 'jpg') + ext_files(subreddit, 'png') + ext_files(subreddit, 'gif'):
+            base_file = os.path.basename(file)
+            print base_file
+            # get the number of colors in the image and compare
+            image = Image.open(os.path.join(BASE_DIR, subreddit, base_file))
+            w, h = image.size
+            self.assertGreater(num_colors(image.convert('RGB').getcolors(w*h)), COLORS)
 
 if __name__ == '__main__':
     unittest.main()
