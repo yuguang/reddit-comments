@@ -35,7 +35,8 @@ def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
             base_file = os.path.basename(file)
             # get the number of colors in the image and compare
             image = Image.open(os.path.join(BASE_DIR, subreddit, base_file))
-            if num_colors(image.getcolors()) > COLORS:
+            w, h = image.size
+            if num_colors(image.convert('RGB').getcolors(w*h)) > COLORS:
                 coloring = np.array(image)
                 break
         shutil.rmtree(subreddit)
@@ -43,7 +44,6 @@ def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
             raise Exception
         wc = WordCloud(font_path=os.path.join(BASE_DIR, 'fonts', 'Viga-Regular.otf'), background_color="white", width=WIDTH, height=HEIGHT, max_words=500, mask=coloring, max_font_size=FONT_SIZE_MAX, stopwords=stopwords)
         # generate word cloud
-        print frequencies[:10]
         wc.generate_from_frequencies(frequencies)
 
         # create coloring from image
