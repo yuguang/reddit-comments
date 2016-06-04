@@ -14,6 +14,7 @@ def unique(seq):
 
 if __name__ == '__main__':
     MAX_TERMS = 1024*2
+    MIN_TERMS = 200
     parser = argparse.ArgumentParser()
     parser.add_argument("processes", help="Number of processes (best set to number of CPU cores)")
     args = parser.parse_args()
@@ -30,7 +31,7 @@ if __name__ == '__main__':
     for subreddit in subreddits:
         try:
             terms = Term.objects.filter(subreddit=subreddit).exclude(Q(name='[deleted]')|Q(name='&gt;')|Q(name=''))
-            if terms.count() < 50:
+            if terms.count() < MIN_TERMS:
                 continue
             frequencies = [(term.name, int(term.count)) for term in terms[:MAX_TERMS]]
             print "=========================================="
