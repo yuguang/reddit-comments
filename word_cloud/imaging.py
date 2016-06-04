@@ -10,10 +10,10 @@ import subprocess, os, glob, string, shutil
 WIDTH = 800
 HEIGHT = 600
 DPI = 300
-COLORS = int(255*255/2)
-MIN_SCORE = str(100)
+COLORS = int(255*255/6)
+MIN_SCORE = str(300)
 NUM_PHOTOS = str(250)
-FONT_SIZE_MAX = 92
+FONT_SIZE_MAX = 62
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 def num_colors(color_counts):
@@ -56,7 +56,7 @@ def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
     except Exception,e:
         print str(e)
         # take relative word frequencies into account, lower max_font_size
-        wordcloud = WordCloud(font_path=os.path.join(BASE_DIR, 'fonts', 'PassionOne-Regular.otf'), background_color="white", width=WIDTH, height=HEIGHT, max_words=500, max_font_size=FONT_SIZE_MAX, stopwords=stopwords)
+        wordcloud = WordCloud(font_path=os.path.join(BASE_DIR, 'fonts', 'PassionOne-Regular.otf'), background_color="white", width=WIDTH, height=HEIGHT, max_words=500, max_font_size=(FONT_SIZE_MAX + 20), stopwords=stopwords)
         wordcloud.generate_from_frequencies(frequencies)
         plt.imshow(wordcloud)
         plt.axis("off")
