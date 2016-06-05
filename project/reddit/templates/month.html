@@ -1,0 +1,17 @@
+{% extends "peak.html" %}
+
+{% block content %}
+  {% with 'month' as name %}
+  {{block.super}}
+  {% endwith %}
+{% endblock content %}
+
+{% block script %}
+  <script>
+  var file = 'month.tsv';
+  var formatTip = function(d) {
+    return "<strong>" + d.country + "\t" + d.year + "</strong></span>";
+  };
+  </script>
+  {{block.super}}
+{% endblock script %}

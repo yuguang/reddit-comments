@@ -95,3 +95,6 @@ def peak_hours(request):
 
 def peak_weekdays(request):
     return render(request, 'weekday.html')
+
+def peak_months(request):
+    return render(request, 'month.html')
