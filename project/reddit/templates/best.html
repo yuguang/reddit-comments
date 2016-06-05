@@ -1,16 +1,25 @@
 {% extends "base.html" %}
 {% block title %}Top Subreddits{% endblock %}
+{% load staticfiles %}
+{% block style %}
+  <link rel="stylesheet" href="{% static "css/pace.css" %}">
+  <script src="{% static "pace.min.js" %}"></script>
+{% endblock %}
 
 {% block content %}
   <div class="row">
     <div id="container-bubble" style="min-width: 310px; margin-left: 20px; cursor: crosshair;"></div>
   </div>
+  <script>
+  var data = {% include 'bubble.json' %};
+  </script>
 {% endblock %}
 
 {% block script %}
 
 <script src="http://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/highcharts-more.js"></script>
+
 <script>
   $(function () {
     $('#container-bubble').highcharts({
@@ -40,6 +49,7 @@
         },
 
         xAxis: {
+            type: 'logarithmic',
             gridLineWidth: 1,
             title: {
                 text: 'Gilded Comments to Total Comments Ratio'
@@ -50,6 +60,7 @@
         },
 
         yAxis: {
+            type: 'logarithmic',
             startOnTick: false,
             endOnTick: false,
             title: {
@@ -64,7 +75,7 @@
         tooltip: {
             useHTML: true,
             headerFormat: '<table>',
-            pointFormat: '<tr><th colspan="2"><h3>{point.country}</h3></th></tr>' +
+            pointFormat: '<tr><th colspan="2"><h3>{point.name}</h3></th></tr>' +
                 '<tr><th>Gilded ratio:</th><td>{point.x:.8f}%</td></tr>' +
                 '<tr><th>Avg. score:</th><td>{point.y:.2f}</td></tr>' +
                 '<tr><th>Comments:</th><td>{point.z:,.0f}</td></tr>',
@@ -82,7 +93,7 @@
         },
 
         series: [{
-            data: {% include 'bubble.json' %}
+            data: data
         }]
 
     });
