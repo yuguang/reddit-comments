@@ -178,7 +178,7 @@ d3.tsv("{% static "" %}" + file, type, function(data) {
         if (file == 'hour.tsv') {
           return color(d.percent*6);
         } else if (file == 'weekday.tsv') {
-          return color(d.percent*3);
+          return color(d.percent*2.5);
         }
         return color(d.percent*4)})
       .on('mouseover', tip.show)
