@@ -42,3 +42,10 @@ class Term(models.Model):
     class Meta:
         unique_together = (('subreddit', 'name'),)
         ordering = ['-count']
+
+class WordCloud(models.Model):
+    name = models.CharField(max_length=200, primary_key=True)
+    total = models.BigIntegerField(default=0)
+
+    class Meta:
+        ordering = ['-total']

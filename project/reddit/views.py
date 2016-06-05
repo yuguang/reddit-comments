@@ -55,6 +55,11 @@ def subreddit_detail(request):
     serializer = SearchModelSerializer(SubredditTimeseries,  SubredditSerializer)
     return serializer.detail(request)
 
+@api_view(['GET'])
+def word_cloud(request):
+    serializer = SearchModelSerializer(WordCloud,  WordCloudSerializer)
+    return serializer.detail(request)
+
 def get_ngram_series(term):
     dynamodb = boto3.resource('dynamodb', region_name='us-east-1', endpoint_url="https://dynamodb.us-east-1.amazonaws.com")
 

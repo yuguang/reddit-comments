@@ -11,3 +11,8 @@ class SubredditSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubredditTimeseries
         fields = ('series',)
+
+class WordCloudSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WordCloud
+        fields = ('total',)

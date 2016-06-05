@@ -1,0 +1,62 @@
+{% extends "search.html" %}
+{% load staticfiles %}
+
+{% block content %}
+  <div class="row">
+    <div id="error" style="display: none;" class="alert alert-danger" role="alert">
+      <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+      <span class="sr-only">Error:</span>
+      Enter one subreddit at a time
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-6">
+      <div class="input-group">
+        <input id="search-box" type="text" class="form-control" placeholder="Search for subreddit...">
+      <span class="input-group-btn">
+        <button id="search-btn" class="btn btn-default" type="button">Go!</button>
+      </span>
+      </div><!-- /input-group -->
+    </div><!-- /.col-lg-6 -->
+  </div><!-- /.row -->
+  <div class="row">
+    <div id="container">
+      <img src="" alt="" id="wordcloud">
+    </div>
+  </div>
+{% endblock content %}
+
+{% block script %}
+  <script>
+    $(function () {
+      var termSearch = _.debounce(function (request, response) {
+          $.getJSON('', {
+            term: btoa(request.term)
+          }, response);
+        }, 300);
+      $("#search-box").autocomplete({
+        source: termSearch,
+        minLength: 2,
+        focus: function() {
+          // prevent value inserted on focus
+          return false;
+        },
+        delay: 500,
+        select: function( event, ui ) {
+          displayImage(this.value);
+        }
+      }).keydown(function(){
+          $('#error').hide();
+      });
+      $('#search-btn').click( function () {
+        displayImage($('#search-box').val());
+      });
+      function displayImage(subreddit) {
+        if (subreddit.indexOf(',') > -1) {
+          $('#error').show()
+        }
+        $('#wordcloud').attr('src', path + subreddit + '.png');
+      }
+    });
+  </script>
+{% endblock script %}

@@ -30,6 +30,7 @@ urlpatterns = [
     url(r'^domains/', views.domain_detail, name='domain_detail'),
     url(r'^subreddits/', views.subreddit_detail, name='subreddit_detail'),
     url(r'^ngrams/', views.ngram, name='ngram_viewer'),
+    url(r'^words/', views.word_cloud, name='word_cloud'),
     url(r'^$', views.home, name='index'),
     url(r'^top/$', views.top, name='top'),
     url(r'^peak/hours/$', views.peak_hours, name='peak_hours'),
