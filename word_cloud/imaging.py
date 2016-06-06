@@ -74,7 +74,7 @@ def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
             coloring = get_gif_coloring(subreddit)
         if not len(coloring):
             raise Exception('No suitable image found')
-        wc = WordCloud(font_path=os.path.join(BASE_DIR, 'fonts', 'Viga-Regular.otf'), background_color="white", width=WIDTH, height=HEIGHT, max_words=500, mask=coloring, min_font_size=12, max_font_size=FONT_SIZE_MAX, stopwords=stopwords)
+        wc = WordCloud(font_path=os.path.join(BASE_DIR, 'fonts', 'Viga-Regular.otf'), background_color="white", width=WIDTH, height=HEIGHT, max_words=500, mask=coloring, min_font_size=12, stopwords=stopwords)
         # generate word cloud
         wc.generate_from_frequencies(frequencies)
 
