@@ -8,9 +8,12 @@
 
 {% block script %}
   <script>
+  var weekdayShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat'];
+  var weekdayLong = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var file = 'weekday.tsv';
   var formatTip = function(d) {
-    return "<strong>" + d.country + "\t" + d.year + "</strong></span>";
+    var i = weekdayShort.indexOf(d.year);
+    return "<strong>" + d.country + "\t" + weekdayLong[i] + "</strong></span>";
   };
   </script>
   {{block.super}}

@@ -1,7 +1,7 @@
 {% extends "peak.html" %}
 
 {% block content %}
-  {% with 'month' as name %}
+  {% with name='month' score='100' %}
   {{block.super}}
   {% endwith %}
 {% endblock content %}
@@ -9,8 +9,33 @@
 {% block script %}
   <script>
   var file = 'month.tsv';
+  var monthShort = ['Jan',
+   'Feb',
+   'Mar',
+   'Apr',
+   'May',
+   'Jun',
+   'Jul',
+   'Aug',
+   'Sept',
+   'Oct',
+   'Nov',
+   'Dec'];
+  var monthLong = ['January',
+   'February',
+   'March',
+   'April',
+   'May',
+   'June',
+   'July',
+   'August',
+   'September',
+   'October',
+   'November',
+   'December'];
   var formatTip = function(d) {
-    return "<strong>" + d.country + "\t" + d.year + "</strong></span>";
+    var i = monthShort.indexOf(d.year);
+    return "<strong>" + d.country + "\t" + monthLong[i] + "</strong></span>";
   };
   </script>
   {{block.super}}
