@@ -107,16 +107,19 @@ def kmeans(points, k, min_diff):
 
     return clusters
 
-def generated(r,g,b):
-    return r == g and g == b
+def generated(colors):
+    avg = (sum([v[0] for v in colors]) / float(3), sum([v[1] for v in colors]) / float(3), sum([v[2] for v in colors]) / float(3))
+    if all(item > 255/3*2 for item in avg) or (abs(avg[0]-avg[1]) < 10 and abs(avg[2]-avg[1]) < 10):
+        return True
+    return False
 
 def num_colors(file):
     colors = colorz(file, 3)
     n = 0
     T = 30
+    if generated(colors):
+        return 0
     for r,g,b in colors:
-        if generated(r,g,b):
-            return 0
         if r > T and g > T and b > T and r < (255 - T) and g < (255 - T) and b < (255 - T):
             n += 1
     return n
@@ -128,6 +131,9 @@ class TestColors(unittest.TestCase):
         self.assertEqual(num_colors('images/cat.jpg'), 2)
         self.assertEqual(num_colors('images/bw.jpg'), 1)
         self.assertEqual(num_colors('images/twitter.jpg'), 0)
+    def test_avg(self):
+        colors = colorz('images/twitter.jpg', 3)
+        self.assertTrue(generated(colors))
 
 class TestSize(unittest.TestCase):
     def test_sub(self):

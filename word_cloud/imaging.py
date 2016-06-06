@@ -11,17 +11,27 @@ from colors import num_colors, get_image_size
 WIDTH = 540
 HEIGHT = 540
 DPI = 300
-COLORS = 1
+DOMINANT_COLORS = 3
+COLORS = int(255*255/6)
 MIN_SCORE = str(300)
 NUM_PHOTOS = str(250)
 FONT_SIZE_MAX = 62
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
+def all_colors(file):
+    # color_counts: a list of (count, color) tuples or None
+    image = Image.open(file)
+    w, h = image.size
+    color_counts = image.convert('RGB').getcolors(w*h)
+    if not color_counts:
+        return 0
+    return len(filter(lambda t: t[0] > 0, color_counts))
+
 def ext_files(subreddit, ext):
     return glob.glob(os.path.join(BASE_DIR, subreddit) + '/*.' + ext)
 
 def get_gif_coloring(subreddit):
-    url = "https://www.reddit.com/r/{}/top/.json?limit=200&t=all".format(subreddit)
+    url = "https://www.reddit.com/r/{}/top/.json?limit=500&t=all".format(subreddit)
     opener = urllib2.build_opener()
     opener.addheaders = [('User-agent', 'my_unique_reddit_downloader' + str(random.randrange(0, 1000)))]
     response = opener.open(url)
@@ -38,9 +48,10 @@ def get_gif_coloring(subreddit):
             output.write(image_file.read())
         image = Image.open(filename)
         w, h = get_image_size(filename)
-        if w > WIDTH and h > HEIGHT and num_colors(filename) > COLORS:
+        if w > WIDTH and h > HEIGHT and all_colors(filename) > COLORS and num_colors(filename) >= DOMINANT_COLORS:
             coloring = np.array(image)
             return coloring
+    return []
 
 def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
     try:
@@ -54,7 +65,7 @@ def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
             # get the number of colors in the image and compare
             image = Image.open(filename)
             w, h = get_image_size(filename)
-            if w > WIDTH and h > HEIGHT and num_colors(filename) > COLORS:
+            if w > WIDTH and h > HEIGHT and all_colors(filename) > COLORS and num_colors(filename) >= DOMINANT_COLORS:
                 coloring = np.array(image)
                 break
         shutil.rmtree(subreddit)
@@ -63,7 +74,7 @@ def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
             coloring = get_gif_coloring(subreddit)
         if not len(coloring):
             raise Exception('No suitable image found')
-        wc = WordCloud(font_path=os.path.join(BASE_DIR, 'fonts', 'Viga-Regular.otf'), background_color="white", width=WIDTH, height=HEIGHT, max_words=500, mask=coloring, min_font_size=10, max_font_size=FONT_SIZE_MAX, stopwords=stopwords)
+        wc = WordCloud(font_path=os.path.join(BASE_DIR, 'fonts', 'Viga-Regular.otf'), background_color="white", width=WIDTH, height=HEIGHT, max_words=500, mask=coloring, min_font_size=12, max_font_size=FONT_SIZE_MAX, stopwords=stopwords)
         # generate word cloud
         wc.generate_from_frequencies(frequencies)
 
@@ -103,7 +114,7 @@ class TestColors(unittest.TestCase):
             # get the number of colors in the image and compare
             image = Image.open(os.path.join(BASE_DIR, subreddit, base_file))
             w, h = image.size
-            self.assertGreater(num_colors(image.convert('RGB').getcolors(w*h)), COLORS)
+            self.assertGreaterEqual(num_colors(image.convert('RGB').getcolors(w*h)), DOMINANT_COLORS)
     def test_get_gif(self):
         self.assertGreater(len(get_gif_coloring('gifs')), 0)
 
