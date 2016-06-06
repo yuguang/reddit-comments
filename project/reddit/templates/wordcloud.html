@@ -1,5 +1,13 @@
 {% extends "search.html" %}
 {% load staticfiles %}
+{% block style %}
+  <style>
+  .top-buffer { margin-top:20px; }
+  #wordcloud {
+    image-rendering: crisp-edges;
+  }
+  </style>
+{% endblock %}
 
 {% block content %}
   <div class="row">
@@ -10,7 +18,7 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-lg-6">
+    <div class="col-lg-6 col-lg-offset-3">
       <div class="input-group">
         <input id="search-box" type="text" class="form-control" placeholder="Search for subreddit...">
       <span class="input-group-btn">
@@ -19,10 +27,10 @@
       </div><!-- /input-group -->
     </div><!-- /.col-lg-6 -->
   </div><!-- /.row -->
-  <div class="row">
-    <div id="container">
-      <img src="" alt="" id="wordcloud">
-    </div>
+  <div class="row top-buffer">
+      <div class="span4"></div>
+      <div class="span4"><img class="center-block" src="http://redditor.club/wordcloud/PS3.png" width="800" alt="" id="wordcloud"></div>
+      <div class="span4"></div>
   </div>
 {% endblock content %}
 
@@ -40,10 +48,6 @@
         focus: function() {
           // prevent value inserted on focus
           return false;
-        },
-        delay: 500,
-        select: function( event, ui ) {
-          displayImage(this.value);
         }
       }).keydown(function(){
           $('#error').hide();
@@ -54,8 +58,10 @@
       function displayImage(subreddit) {
         if (subreddit.indexOf(',') > -1) {
           $('#error').show()
+        } else {
+          var path = 'http://redditor.club/wordcloud/';
+          $('#wordcloud').attr('src', path + subreddit + '.png');
         }
-        $('#wordcloud').attr('src', path + subreddit + '.png');
       }
     });
   </script>
