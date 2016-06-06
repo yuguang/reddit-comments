@@ -6,7 +6,7 @@ import requests
 from redditdownload.redditdownload import download_images
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 import subprocess, os, glob, string, shutil, random
-from colors import num_colors
+from colors import num_colors, get_image_size
 
 WIDTH = 540
 HEIGHT = 540
@@ -37,7 +37,7 @@ def get_gif_coloring(subreddit):
         with open(filename, 'wb') as output:
             output.write(image_file.read())
         image = Image.open(filename)
-        w, h = image.size
+        w, h = get_image_size(filename)
         if w > WIDTH and h > HEIGHT and num_colors(filename) > COLORS:
             coloring = np.array(image)
             return coloring
@@ -50,10 +50,11 @@ def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
         coloring = []
         for file in ext_files(subreddit, 'jpg') + ext_files(subreddit, 'png'):
             base_file = os.path.basename(file)
+            filename = os.path.join(BASE_DIR, subreddit, base_file)
             # get the number of colors in the image and compare
-            image = Image.open(os.path.join(BASE_DIR, subreddit, base_file))
-            w, h = image.size
-            if w > WIDTH and h > HEIGHT and num_colors(os.path.join(BASE_DIR, subreddit, base_file)) > COLORS:
+            image = Image.open(filename)
+            w, h = get_image_size(filename)
+            if w > WIDTH and h > HEIGHT and num_colors(filename) > COLORS:
                 coloring = np.array(image)
                 break
         shutil.rmtree(subreddit)
@@ -107,4 +108,4 @@ class TestColors(unittest.TestCase):
         self.assertGreater(len(get_gif_coloring('gifs')), 0)
 
 if __name__ == '__main__':
-    unittest.main()
+    save_word_cloud('DotA2', [('a',1),('b',2)])
