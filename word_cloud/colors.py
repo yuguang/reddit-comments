@@ -83,10 +83,8 @@ import unittest
 
 class TestColors(unittest.TestCase):
     def test_sub(self):
-        a = 1
+        self.assertEqual(num_colors('images/cat.jpg'), 2)
+        self.assertEqual(num_colors('images/bw.jpg'), 1)
 
 if __name__ == '__main__':
-    # convert hex to decimal and check if one of the colors is close to white
-    # improve clarity of words
-    print num_colors('cat.jpg')
-    print num_colors('bw.jpg')
+    unittest.main()

@@ -8,7 +8,7 @@ from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 import subprocess, os, glob, string, shutil, random
 from colors import num_colors
 
-WIDTH = 720
+WIDTH = 540
 HEIGHT = 540
 DPI = 300
 COLORS = 1
@@ -19,6 +19,28 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 def ext_files(subreddit, ext):
     return glob.glob(os.path.join(BASE_DIR, subreddit) + '/*.' + ext)
+
+def get_gif_coloring(subreddit):
+    url = "https://www.reddit.com/r/{}/top/.json?limit=200&t=all".format(subreddit)
+    opener = urllib2.build_opener()
+    opener.addheaders = [('User-agent', 'my_unique_reddit_downloader' + str(random.randrange(0, 1000)))]
+    response = opener.open(url)
+    payload = json.loads(response.read())
+    for i in range(0,len(payload['data']['children'])):
+        if 'preview' not in payload['data']['children'][i]['data']:
+            continue
+        url = payload['data']['children'][i]['data']['preview']['images'][0]['source']['url']
+        # download and open image
+        image_file = opener.open(url)
+        # generate random uuid for image filename
+        filename = subreddit + '_mask'
+        with open(filename, 'wb') as output:
+            output.write(image_file.read())
+        image = Image.open(filename)
+        w, h = image.size
+        if w > WIDTH and h > HEIGHT and num_colors(filename) > COLORS:
+            coloring = np.array(image)
+            return coloring
 
 def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
     try:
@@ -37,26 +59,9 @@ def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
         shutil.rmtree(subreddit)
         if not len(coloring):
             # get previews for gifs
-            url = "https://www.reddit.com/r/{}/top/.json?limit=200&t=all".format(subreddit)
-            opener = urllib2.build_opener()
-            opener.addheaders = [('User-agent', 'my_unique_reddit_downloader' + str(random.randrange(0,1000)))]
-            response = opener.open(url)
-            payload = json.loads(response.read())
-            for i in range(0,200):
-                if not 'preview' in payload['data']['children'][i]['data']:
-                    continue
-                url = payload['data']['children'][i]['data']['preview']['images'][0]['source']['url']
-                # download and open image
-                image_file = opener.open(url)
-                # generate random uuid for image filename
-                filename = subreddit + '_mask'
-                with open(filename, 'wb') as output:
-                  output.write(image_file.read())
-                image = Image.open(filename)
-                w, h = image.size
-                if w > WIDTH and h > HEIGHT and num_colors(filename) > COLORS:
-                    coloring = np.array(image)
-                    break
+            coloring = get_gif_coloring(subreddit)
+        if not len(coloring):
+            raise Exception('No suitable image found')
         wc = WordCloud(font_path=os.path.join(BASE_DIR, 'fonts', 'Viga-Regular.otf'), background_color="white", width=WIDTH, height=HEIGHT, max_words=500, mask=coloring, min_font_size=10, max_font_size=FONT_SIZE_MAX, stopwords=stopwords)
         # generate word cloud
         wc.generate_from_frequencies(frequencies)
@@ -98,6 +103,8 @@ class TestColors(unittest.TestCase):
             image = Image.open(os.path.join(BASE_DIR, subreddit, base_file))
             w, h = image.size
             self.assertGreater(num_colors(image.convert('RGB').getcolors(w*h)), COLORS)
+    def test_get_gif(self):
+        self.assertGreater(len(get_gif_coloring('gifs')), 0)
 
 if __name__ == '__main__':
     unittest.main()
