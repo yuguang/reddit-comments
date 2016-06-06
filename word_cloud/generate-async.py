@@ -30,7 +30,7 @@ if __name__ == '__main__':
     stopwords = set(Term.objects.exclude(Q(name='[deleted]')|Q(name='&gt;')|Q(name='')).annotate(total=Sum('count')).order_by('-total').values_list('name', flat=True)[:100])
     for subreddit in subreddits:
         try:
-            terms = Term.objects.filter(subreddit=subreddit).exclude(Q(name='[deleted]')|Q(name='&gt;')|Q(name=''))
+            terms = Term.objects.filter(subreddit=subreddit).exclude(Q(name='[deleted]')|Q(name='&gt;')|Q(name='&lt;')|Q(name='')|Q(name__contains=']('))
             if terms.count() < MIN_TERMS:
                 continue
             frequencies = [(term.name, int(term.count)) for term in terms[:MAX_TERMS]]
