@@ -30,6 +30,9 @@ def all_colors(file):
 def ext_files(subreddit, ext):
     return glob.glob(os.path.join(BASE_DIR, subreddit) + '/*.' + ext)
 
+def valid_dimensions(w, h):
+    return w > WIDTH and h > HEIGHT and w < (WIDTH*6) and h < (HEIGHT*6)
+
 def get_gif_coloring(subreddit):
     url = "https://www.reddit.com/r/{}/top/.json?limit=500&t=all".format(subreddit)
     opener = urllib2.build_opener()
@@ -48,7 +51,7 @@ def get_gif_coloring(subreddit):
             output.write(image_file.read())
         image = Image.open(filename)
         w, h = get_image_size(filename)
-        if w > WIDTH and h > HEIGHT and all_colors(filename) > COLORS and num_colors(filename) >= DOMINANT_COLORS:
+        if valid_dimensions(w, h) and all_colors(filename) > COLORS and num_colors(filename) >= DOMINANT_COLORS:
             coloring = np.array(image)
             return coloring
     return []
@@ -74,7 +77,7 @@ def save_word_cloud(subreddit, frequencies, stopwords=STOPWORDS):
             coloring = get_gif_coloring(subreddit)
         if not len(coloring):
             raise Exception('No suitable image found')
-        wc = WordCloud(font_path=os.path.join(BASE_DIR, 'fonts', 'Viga-Regular.otf'), background_color="white", width=WIDTH, height=HEIGHT, max_words=500, mask=coloring, min_font_size=12, stopwords=stopwords)
+        wc = WordCloud(font_path=os.path.join(BASE_DIR, 'fonts', 'Viga-Regular.otf'), background_color="white", width=WIDTH, height=HEIGHT, max_words=500, mask=coloring, min_font_size=18)
         # generate word cloud
         wc.generate_from_frequencies(frequencies)
 
@@ -104,17 +107,6 @@ class TestDownload(unittest.TestCase):
         self.assertTrue(os.path.exists('gifs.png'))
 
 class TestColors(unittest.TestCase):
-    def test_sub(self):
-        subreddit = 'cats'
-        download_images(['--num', '1', '--sort-type', 'topall', subreddit, subreddit])
-        # get a list of downloaded file names
-        for file in ext_files(subreddit, 'jpg') + ext_files(subreddit, 'png') + ext_files(subreddit, 'gif'):
-            base_file = os.path.basename(file)
-            print base_file
-            # get the number of colors in the image and compare
-            image = Image.open(os.path.join(BASE_DIR, subreddit, base_file))
-            w, h = image.size
-            self.assertGreaterEqual(num_colors(image.convert('RGB').getcolors(w*h)), DOMINANT_COLORS)
     def test_get_gif(self):
         self.assertGreater(len(get_gif_coloring('gifs')), 0)
 

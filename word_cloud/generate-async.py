@@ -13,7 +13,7 @@ def unique(seq):
     return [x for x in seq if not (x in seen or seen_add(x))]
 
 if __name__ == '__main__':
-    MAX_TERMS = 1024*2
+    MAX_TERMS = 1024*4
     MIN_TERMS = 200
     parser = argparse.ArgumentParser()
     parser.add_argument("processes", help="Number of processes (best set to number of CPU cores)")
@@ -27,17 +27,18 @@ if __name__ == '__main__':
     multiple_results = []
     subreddits = unique(Term.objects.values_list('subreddit', flat=True).all())
     # common words that appear in all subreddits are considered stopwords
-    stopwords = set(Term.objects.exclude(Q(name='[deleted]')|Q(name='&gt;')|Q(name='')).annotate(total=Sum('count')).order_by('-total').values_list('name', flat=True)[:100])
+    stopwords = set(Term.objects.exclude(Q(name='[deleted]')|Q(name='&gt;')|Q(name='')).annotate(total=Sum('count')).order_by('-total').distinct().values_list('name', flat=True)[:50])
     for subreddit in subreddits:
         try:
             terms = Term.objects.filter(subreddit=subreddit).exclude(Q(name='[deleted]')|Q(name='&gt;')|Q(name='&lt;')|Q(name='')|Q(name__contains=']('))
             if terms.count() < MIN_TERMS:
                 continue
-            frequencies = [(term.name, int(term.count)) for term in terms[:MAX_TERMS]]
+            # remove stopwords
+            frequencies = [(term.name, int(term.count)) for term in terms[:MAX_TERMS] if not term.name in stopwords]
             print "=========================================="
             print "making word cloud for ", subreddit
             print "=========================================="
-            result = pool.apply_async(save_word_cloud, (subreddit, frequencies, stopwords)) # make word cloud asynchronously
+            result = pool.apply_async(save_word_cloud, (subreddit, frequencies)) # make word cloud asynchronously
             multiple_results.append(result)
         except Exception,e:
             print str(e)
