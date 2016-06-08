@@ -29,6 +29,8 @@ if __name__ == '__main__':
     # common words that appear in all subreddits are considered stopwords
     stopwords = set(Term.objects.exclude(Q(name='[deleted]')|Q(name='&gt;')|Q(name='')).annotate(total=Sum('count')).order_by('-total').distinct().values_list('name', flat=True)[:50])
     for subreddit in subreddits:
+        if os.path.exists('{}.png'.format(subreddit)):
+            continue
         try:
             terms = Term.objects.filter(subreddit=subreddit).exclude(Q(name='[deleted]')|Q(name='&gt;')|Q(name='&lt;')|Q(name='')|Q(name__contains=']('))
             if terms.count() < MIN_TERMS:
