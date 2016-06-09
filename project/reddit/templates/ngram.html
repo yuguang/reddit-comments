@@ -18,6 +18,7 @@
       <input type="text" class="form-control" id="search-box" {% if debug %}value="new"{% endif %} placeholder="Enter terms"/>
           <span class="input-group-btn">
             <button id="search-btn" class="btn btn-default" type="button">Search</button>
+            <button id="shuffle-btn" class="btn btn-default" type="button">Shuffle</button>
           </span>
       </div>
     </div><!-- /.col-lg-6 -->
@@ -31,6 +32,20 @@
   <script src="https://code.highcharts.com/stock/highstock.js"></script>
   <script src="{% static "bootstrap-tokenfield.min.js" %}"></script>
   <script>
+    var searches = [['obama', 'mccain'], ['iphone 5s', 'iphone 4s', 'iphone 5', 'iphone 6'], ['breaking bad', 'game of thrones', 'mad men', 'dexter'], ['imo', 'imho'], ['blackberry', 'twitter'], ['facebook', 'youtube'], ['swine flu', 'h1n1']];
+    var shuffleIndex = 0;
+    function shuffle() {
+      var terms = searches[shuffleIndex].join(',');
+      displayGraph(terms);
+      $('#search-box').tokenfield('setTokens', terms);
+      shuffleIndex += 1;
+      if (shuffleIndex == searches.length) {
+        shuffleIndex = 0;
+      }
+    }
+    $('#shuffle-btn').click(function () {
+      shuffle();
+    });
     $('#search-box').tokenfield({createTokensOnBlur: true});
     $('#search-btn').click(function () {
       var terms = $('#search-box').val();
@@ -44,10 +59,13 @@
     }
     function displayGraph(terms) {
       $.getJSON('', {'terms': terms}, function (data) {
+        var dates = [];
         var series = _.chain(data)
           .map(function (list, domain) {
             list = _.map(list, function (item) {
-              return [toDate(item.date), parseInt(item.percentage) / Math.pow(10, 8)];
+              var date = toDate(item.date);
+              dates.push(date);
+              return [date, parseInt(item.percentage) / Math.pow(10, 8)];
             });
 
             return {
@@ -68,11 +86,12 @@
           },
 
           rangeSelector: {
-            selected: 1,
+            selected: 4,
             inputDateFormat: '%Y-%m-%d'
           },
           tooltip: {
-            valueSuffix: '%'
+            valueSuffix: '%',
+            shared: true
           },
           title: {
             text: ''
@@ -87,6 +106,15 @@
             $('input.highcharts-range-selector', $('#' + chart.options.chart.renderTo)).datepicker()
           }, 0)
         });
+        var min = _.min(dates);
+        var date = new Date(min);
+        // console.log([date.getFullYear() + 1, date.getMonth(), date.getDay()]);
+        chart.xAxis[0].setExtremes(
+          min,
+          Date.UTC(date.getFullYear() + 1, date.getMonth(), date.getDay()),
+          true,
+          false
+        );
       });
     }
     // Set the datepicker's date format
