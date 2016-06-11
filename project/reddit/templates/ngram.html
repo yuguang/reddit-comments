@@ -13,7 +13,7 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-lg-6 col-lg-offset-3">
+    <div class="col-lg-8 col-lg-offset-2">
       <div class="input-group">
       <input type="text" class="form-control" id="search-box" {% if debug %}value="new"{% endif %} placeholder="Enter terms"/>
           <span class="input-group-btn">
@@ -111,7 +111,7 @@
         // console.log([date.getFullYear() + 1, date.getMonth(), date.getDay()]);
         chart.xAxis[0].setExtremes(
           min,
-          Date.UTC(date.getFullYear() + 1, date.getMonth(), date.getDay()),
+          Date.UTC(date.getFullYear() + 2, date.getMonth(), date.getDay()),
           true,
           false
         );
