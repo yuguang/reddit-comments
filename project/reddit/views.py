@@ -68,7 +68,7 @@ def get_ngram_series(term):
     response = table.query(
         KeyConditionExpression=Key('phrase').eq(term)
     )
-    return response['Items']
+    return [[item['date'], item['percentage']] for item in  response['Items']]
 
 
 @api_view(['GET'])

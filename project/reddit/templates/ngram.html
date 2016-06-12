@@ -49,7 +49,7 @@
     $('#search-box').tokenfield({createTokensOnBlur: true});
     $('#search-btn').click(function () {
       var terms = $('#search-box').val();
-      displayGraph(terms);
+      displayGraph(terms.toLowerCase());
     });
     function toDate(date_compressed) {
       var y = '20' + date_compressed.slice(0,2);
@@ -63,9 +63,9 @@
         var series = _.chain(data)
           .map(function (list, domain) {
             list = _.map(list, function (item) {
-              var date = toDate(item.date);
+              var date = toDate(item[0]);
               dates.push(date);
-              return [date, parseInt(item.percentage) / Math.pow(10, 8)];
+              return [date, parseInt(item[1]) / Math.pow(10, 8)];
             });
 
             return {
