@@ -2,7 +2,7 @@
 {% load staticfiles %}
 
 {% block content %}
-  {% with name='domain' subtitle='http and https combined' %}
+  {% with name='domain' subtitle='http and https combined' fieldtype='url' %}
   {{block.super}}
   {% endwith %}
 {% endblock content %}

@@ -24,12 +24,14 @@
 {% block content %}
   <div class="row">
     <div class="col-lg-6">
+      <form id="search-form" action="">
       <div class="input-group">
-        <input id="search-box" type="text" class="form-control" placeholder="Search for {{ name }}...">
+        <input id="search-box" type="{% if fieldtype %}{{ fieldtype }}{% else %}text{% endif %}" class="form-control" placeholder="Search for {{ name }}s separated by commas">
       <span class="input-group-btn">
-        <button id="search-btn" class="btn btn-default" type="button">Go!</button>
+        <button id="search-btn" class="btn btn-default" type="submit">Go!</button>
       </span>
       </div><!-- /input-group -->
+      </form>
     </div><!-- /.col-lg-6 -->
   </div><!-- /.row -->
   <div class="row">
@@ -95,10 +97,11 @@
           return false;
         }
       });
-      $('#search-btn').click( function () {
+      $('#search-form').submit(function(){
         var terms = _.filter(split($('#search-box').val()), function(term) { return term.length });
         // draw graph for domains
         displayDomains(terms);
+        event.preventDefault();
       });
       function displayDomains(domains) {
         var years = _.range(2008,2016);
