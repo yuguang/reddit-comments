@@ -14,7 +14,7 @@ dynamodb = boto3.resource('dynamodb', region_name='us-east-1', endpoint_url="htt
 table = dynamodb.Table('ngrams')
 
 START = 14899123 * int(args.multiple)
-STOP = START * (int(args.multiple) + 1)
+STOP = 14899123 * (int(args.multiple) + 1)
 line_no = 0
 with open(args.file, 'rb') as file:
     reader = csv.reader(file)
