@@ -6,7 +6,7 @@ Redditor's Club
 
 ## Technology Stack
 This project currently makes use of the following technologies:
-- Apache Cassandra 2.2.6
+- Amazon DynamoDB
 - Apache Spark 1.6.1 with Hadoop 2.7
 - MySQL
 - AWS S3
