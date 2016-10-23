@@ -8,6 +8,37 @@
 
   <!-- Optional theme -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+  <style>
+    /* Sticky footer styles
+    -------------------------------------------------- */
+    html {
+      position: relative;
+      min-height: 100%;
+    }
+    body {
+      /* Margin bottom by footer height */
+      margin-bottom: 60px;
+    }
+    .footer {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      /* Set the fixed height of the footer here */
+      height: 60px;
+      background-color: #f5f5f5;
+    }
+
+    #share-buttons img {
+      width: 35px;
+      padding: 5px;
+      border: 0;
+      box-shadow: 0;
+      display: inline;
+    }
+    #share-buttons a {
+      text-decoration: none;
+    }
+  </style>
   <meta charset="UTF-8">
   <title>{% block title %}{% endblock %}</title>
 </head>
@@ -16,7 +47,7 @@
   <div class="container">
     <div class="navbar-header">
       <a class="navbar-brand" href="{% url 'index' %}">
-        <img src="https://www.reddit.com/favicon.ico" height="20" alt="github">
+        Redditor
       </a>
     </div>
     <ul class="nav navbar-nav">
@@ -47,6 +78,7 @@
 </nav>
 <div class="container">
   {% block content %}{% endblock %}
+
 </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
     <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
@@ -55,5 +87,47 @@
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
 {% block script %}{% endblock %}
+  <footer class="footer">
+    <div class="container">
+      <div id="share-buttons">
+
+        <!-- Facebook -->
+        <a href="http://www.facebook.com/sharer.php?u=http://redditor.club/" target="_blank">
+            <img src="https://simplesharebuttons.com/images/somacro/facebook.png" alt="Facebook" />
+        </a>
+
+        <!-- Google+ -->
+        <a href="https://plus.google.com/share?url=http://redditor.club/" target="_blank">
+            <img src="https://simplesharebuttons.com/images/somacro/google.png" alt="Google" />
+        </a>
+
+        <!-- LinkedIn -->
+        <a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=http://redditor.club/" target="_blank">
+            <img src="https://simplesharebuttons.com/images/somacro/linkedin.png" alt="LinkedIn" />
+        </a>
+
+        <!-- Pinterest -->
+        <a href="javascript:void((function()%7Bvar%20e=document.createElement('script');e.setAttribute('type','text/javascript');e.setAttribute('charset','UTF-8');e.setAttribute('src','http://assets.pinterest.com/js/pinmarklet.js?r='+Math.random()*99999999);document.body.appendChild(e)%7D)());">
+            <img src="https://simplesharebuttons.com/images/somacro/pinterest.png" alt="Pinterest" />
+        </a>
+
+        <!-- Reddit -->
+        <a href="http://reddit.com/submit?url=http://redditor.club/&amp;title=Reddit Data Visualizations"  onclick="window.location = '//www.reddit.com/submit?url=' + encodeURIComponent(window.location) + '&amp;title=' + document.title; return false" target="_blank">
+            <img src="https://simplesharebuttons.com/images/somacro/reddit.png" alt="Reddit" />
+        </a>
+
+        <!-- Tumblr-->
+        <a href="http://www.tumblr.com/share/link?url=http://redditor.club/&amp;title=Reddit Data Visualizations" target="_blank">
+            <img src="https://simplesharebuttons.com/images/somacro/tumblr.png" alt="Tumblr" />
+        </a>
+
+        <!-- Twitter -->
+        <a href="https://twitter.com/share?url=http://redditor.club/&amp;text=Reddit%20Data%20Visualizations&amp;hashtags=reddit" target="_blank">
+            <img src="https://simplesharebuttons.com/images/somacro/twitter.png" alt="Twitter" />
+        </a>
+
+      </div>
+    </div>
+  </footer>
 </body>
 </html>
