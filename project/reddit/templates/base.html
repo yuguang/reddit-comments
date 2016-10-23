@@ -24,7 +24,7 @@
       bottom: 0;
       width: 100%;
       /* Set the fixed height of the footer here */
-      height: 60px;
+      height: 120px;
       background-color: #f5f5f5;
     }
 
@@ -38,13 +38,16 @@
     #share-buttons a {
       text-decoration: none;
     }
+    #share-buttons {
+      width: 278px;
+    }
   </style>
   <meta charset="UTF-8">
   <title>{% block title %}{% endblock %}</title>
 </head>
 <body>
 <nav class="navbar navbar-default">
-  <div class="container">
+  <div class="container-fluid">
     <div class="navbar-header">
       <a class="navbar-brand" href="{% url 'index' %}">
         Redditor
@@ -89,7 +92,7 @@
 {% block script %}{% endblock %}
   <footer class="footer">
     <div class="container">
-      <div id="share-buttons">
+      <div class="center-block" id="share-buttons">
 
         <!-- Facebook -->
         <a href="http://www.facebook.com/sharer.php?u=http://redditor.club/" target="_blank">
