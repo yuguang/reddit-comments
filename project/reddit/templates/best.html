@@ -88,7 +88,14 @@
                 dataLabels: {
                     enabled: true,
                     format: '{point.name}'
-                }
+                },
+                point: {
+                        events: {
+                            click: function (e) {
+                                window.open('http://reddit.com/r/' + this.name, '_blank');
+                            }
+                        }
+                    }
             }
         },
 
