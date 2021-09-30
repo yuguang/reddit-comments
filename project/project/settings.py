@@ -80,19 +80,14 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django_cassandra_engine',
-        'NAME': 'reddit',
-        'TEST_NAME': 'reddit_test',
-        'HOST': '',
-        'OPTIONS': {
-            'replication': {
-                'strategy_class': 'SimpleStrategy',
-                'replication_factor': 3
-            }
-        }
-    }
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'yuguang_reddit',                      # Or path to database file if using sqlite3.
+        'USER': 'root',                      # Not used with sqlite3.
+        'PASSWORD': 'root',                  # Not used with sqlite3.
+        'HOST': 'mysql',                      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '3306',                      # Set to empty string for default. Not used with sqlite3.
+    },
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
