@@ -1,8 +1,10 @@
 boto3
-django==1.8.13
+django == 1.9.6
 stemming
 wordcloud
 pillow
 matplotlib
-mysqlclient
+dj-database-url
+psycopg2-binary
 djangorestframework==3.4.7
+gunicorn

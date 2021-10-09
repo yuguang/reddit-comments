@@ -6,7 +6,7 @@ databases:
 services:
   - type: web
     name: redditor
-    env: python
+    env: docker
     buildCommand: "./build.sh"
     startCommand: "gunicorn mysite.wsgi:application"
     envVars:
