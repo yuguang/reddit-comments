@@ -1,3 +1,5 @@
+# syntax = docker/dockerfile:1.2
+
 FROM python:2.7
 
 # set environment variables
@@ -14,4 +16,6 @@ ADD . /website/
 
 EXPOSE 8000
 
-CMD ["python", "/website/project/manage.py", "runserver", "0.0.0.0:8000"]
+WORKDIR /website/project
+
+CMD ["gunicorn", "project.wsgi"]

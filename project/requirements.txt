@@ -3,3 +3,4 @@ djangorestframework
 MySQL-python
 django_cassandra_engine
 boto3
+gunicorn
