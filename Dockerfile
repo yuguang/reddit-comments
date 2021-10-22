@@ -18,4 +18,4 @@ EXPOSE 8000
 
 WORKDIR /website/project
 
-CMD ["gunicorn", "project.wsgi"]
+CMD ["gunicorn", "project.wsgi", "--bind", "0.0.0.0:8000"]

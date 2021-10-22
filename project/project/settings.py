@@ -86,7 +86,7 @@ WSGI_APPLICATION = 'project.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         # Feel free to alter this value to suit your needs.
-        default='mysql://root:root@localhost:3306/yuguang_reddit',
+        default='mysql://root:root@mysql:3306/yuguang_reddit',
         conn_max_age=600
     )
 }
