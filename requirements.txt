@@ -5,6 +5,6 @@ wordcloud
 pillow
 matplotlib
 dj-database-url
-psycopg2-binary
 djangorestframework==3.4.7
 gunicorn
+whitenoise==3.2.3

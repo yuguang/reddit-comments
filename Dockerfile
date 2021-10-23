@@ -20,6 +20,7 @@ ADD ./sqlite/db.sqlite3 /sqlite/db.sqlite3
 EXPOSE 8000
 
 WORKDIR /website/project
+RUN python manage.py collectstatic --no-input
 #RUN python manage.py migrate
 
 CMD ["gunicorn", "project.wsgi", "--bind", "0.0.0.0:8000"]
