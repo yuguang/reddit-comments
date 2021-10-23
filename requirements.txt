@@ -7,4 +7,4 @@ matplotlib
 dj-database-url
 djangorestframework==3.4.7
 gunicorn
-whitenoise==3.2.3
+whitenoise==4.1.4
