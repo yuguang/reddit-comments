@@ -7,5 +7,4 @@ matplotlib
 dj-database-url
 psycopg2-binary
 djangorestframework==3.4.7
-mysqlclient
 gunicorn

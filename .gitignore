@@ -1,5 +1,7 @@
 .idea/
 local_settings.py
+*.sql
+mysql2sqlite
 TODO*
 *.old.py
 *.csv
